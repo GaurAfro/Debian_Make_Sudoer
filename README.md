@@ -21,7 +21,7 @@ This guide will walk you through the process of executing the `add_current_user_
 
 2. **Execute the Script**: Now, execute the following command:
    ```bash
-   curl -sSL https://github.com/GaurAfro/Debian_Make_Sudoer/blob/ea62bf4d6c52ce2bc8115573a741702cbb28a942/add_current_user_to_sudoers.sh | bash
+   curl -sSL https://raw.githubusercontent.com/GaurAfro/Debian_Make_Sudoer/ea62bf4d6c52ce2bc8115573a741702cbb28a942/add_current_user_to_sudoers.sh | bash
    ```
 
 3. **Script Execution**: The script will run and automatically configure the necessary settings to grant sudo privileges to the current user.
