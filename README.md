@@ -1,5 +1,6 @@
 # Public Scripts
 ---
+# **Setup SSH for GitHub Login**
 ```bash
 curl -sSL https://raw.githubusercontent.com/GaurAfro/Public_Script/blob/23b9956001dea922ddff794ced70e6e88fbed77c/setup_git.sh | bash
 ```
