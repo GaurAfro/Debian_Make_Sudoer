@@ -1,7 +1,8 @@
 # Public Scripts
 ---
-curl -sSL https://raw.githubusercontent.com/GaurAfro/gaurafro-dotfiles/blob/4a90baf02630ff2a4c1e4eef9356afe99cb47cbd/scripts/setup_git.sh | bash
-
+```bash
+curl -sSL https://raw.githubusercontent.com/GaurAfro/Public_Script/blob/23b9956001dea922ddff794ced70e6e88fbed77c/setup_git.sh | bash
+```
 ---
 
 ### **Using the `add_current_user_to_sudoers.sh` Script with `curl`**
