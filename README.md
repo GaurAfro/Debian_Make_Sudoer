@@ -1,4 +1,6 @@
 # Public Scripts
+---
+curl -sSL https://raw.githubusercontent.com/GaurAfro/gaurafro-dotfiles/blob/4a90baf02630ff2a4c1e4eef9356afe99cb47cbd/scripts/setup_git.sh | bash
 
 ---
 
