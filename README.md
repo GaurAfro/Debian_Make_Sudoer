@@ -2,7 +2,7 @@
 ---
 # **Setup SSH for GitHub Login**
 ```bash
-curl -sSL https://raw.githubusercontent.com/GaurAfro/Public_Script/blob/23b9956001dea922ddff794ced70e6e88fbed77c/setup_git.sh | bash
+curl -sSL https://raw.githubusercontent.com/GaurAfro/Public_Script/main/setup_git.sh | bash
 ```
 ---
 
@@ -22,7 +22,7 @@ This guide will walk you through the process of executing the `add_current_user_
    ```
 3. **Execute the Script**: Now, execute the following command:
    ```bash
-   curl -sSL https://raw.githubusercontent.com/GaurAfro/Public_Script/blob/d0acc3dae85637ba33969befd6027da6160294b8/add_current_user_to_sudoers.sh | bash
+   curl -sSL https://raw.githubusercontent.com/GaurAfro/Public_Script/main/add_current_user_to_sudoers.sh | bash
    ```
 
 3. **Script Execution**: The script will run and automatically configure the necessary settings to grant sudo privileges to the current user.
