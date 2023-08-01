@@ -2,7 +2,9 @@
 ---
 # **Setup SSH for GitHub Login**
 ```bash
-curl -sSL https://raw.githubusercontent.com/GaurAfro/Public_Script/main/setup_git.sh | bash
+curl -sSL -o setup_git.sh https://raw.githubusercontent.com/GaurAfro/Public_Script/main/setup_git.sh
+chmod +x setup_git.sh
+./setup_git.sh
 ```
 ---
 
