@@ -1,8 +1,8 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 # Prompt user for name and email
-read -p "Enter your name: " name
-read -p "Enter your email: " email
+read -r -p "Enter your name: " name
+read -r -p "Enter your email: " email
 
 # Set the provided name and email for git
 git config --global user.name "$name"
@@ -16,7 +16,14 @@ eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/id_ed25519
 
 # Copy the SSH key to clipboard (requires xclip to be installed)
-xclip -sel clip <~/.ssh/id_ed25519.pub
+
+if command -v xclip > /dev/null 2>&1; then
+    xclip -selection clipboard < ~/.ssh/id_ed25519.pub
+elif command -v xsel > /dev/null 2>&1; then
+    xsel -b < ~/.ssh/id_ed25519.pub
+else
+    echo "Neither xclip nor xsel is installed."
+fi
 
 # Open the GitHub SSH keys settings page in the default browser
 xdg-open "https://github.com/settings/keys"
