@@ -34,37 +34,38 @@ echo "" | tee -a "$log_file"
 echo "" | tee -a "$log_file"
 
 # Prompt user for name and email
-echo "Enter your name: "   | tee -a "$log_file"
-log_and_run 'read -r name'
+echo "Enter your username: "   | tee -a "$log_file"
+read -r username && log_and_run "echo 'Name acquired'"
 echo "Enter your email: "  | tee -a "$log_file"
-log_and_run 'read -r email'
+read -r email && log_and_run "echo 'Email acquired'"
 echo "" | tee -a "$log_file"
 echo "" | tee -a "$log_file"
 echo "" | tee -a "$log_file"
 
 # Set the provided name and email for git
-log_and_run 'git config --global user.name "$name"'
-log_and_run 'git config --global user.email "$email"'
+git config --global user.name "$username" && log_and_run "echo 'Set the git global username'"
+git config --global user.email "$email" && log_and_run "echo 'Set the git global email'"
 echo "" | tee -a "$log_file"
 echo "" | tee -a "$log_file"
 echo "" | tee -a "$log_file"
 
 # Generate SSH key
-log_and_run 'ssh_key_path="$HOME/.ssh/id_ed25519"'
-log_and_run 'ssh-keygen -t ed25519 -C "$email" -f "$ssh_key_path"'
+ssh-keygen -t ed25519 -C "$email"  && log_and_run "echo 'Set the git global email'"
+ssh_key_path="$HOME/.ssh/id_ed25519" && log_and_run "echo 'Set the git global email'"
 echo "" | tee -a "$log_file"
 echo "" | tee -a "$log_file"
 echo "" | tee -a "$log_file"
 
 # Start the ssh-agent and load the SSH key
-log_and_run 'eval "$(ssh-agent -s)"'
-log_and_run 'ssh-add "$ssh_key_path"'
+eval "$(ssh-agent -s)" && log_and_run "echo 'Started the ssh-agent'"
+ssh-add "$ssh_key_path" && log_and_run "echo 'Added the SSH Key'"
 echo "" | tee -a "$log_file"
 echo "" | tee -a "$log_file"
 echo "" | tee -a "$log_file"
 
 # Authenticate GitHub CLI
 if command -v gh > /dev/null 2>&1; then
+    echo "GitHub Cli is installed" | tee -a "$log_file"
     log_and_run "gh auth login -s 'user:email,read:org,repo,write:org,notifications' -p ssh"
     echo "" | tee -a "$log_file"
     echo "" | tee -a "$log_file"
