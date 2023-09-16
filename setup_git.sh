@@ -66,7 +66,7 @@ echo "" | tee -a "$log_file"
 # Authenticate GitHub CLI
 if command -v gh > /dev/null 2>&1; then
     echo "GitHub Cli is installed" | tee -a "$log_file"
-    log_and_run "gh auth login -s 'user:email,read:org,repo,write:org,notifications' -p ssh"
+    gh auth login -s 'user:email,read:org,repo,write:org,notifications' -p ssh && log_and_run "echo 'Logged in to GitHub'"
     echo "" | tee -a "$log_file"
     echo "" | tee -a "$log_file"
     echo "" | tee -a "$log_file"
@@ -80,18 +80,18 @@ else
 fi
 
 # Test the SSH connection to GitHub
-log_and_run "ssh -T git@github.com"
+log_and_run "echo 'yes' | ssh -T git@github.com"
 echo "" | tee -a "$log_file"
 echo "" | tee -a "$log_file"
 echo "" | tee -a "$log_file"
 
-rm ./setup_git.log
-echo "--------------------"
-echo "Removing the logfile"
-echo "--------------------"
-echo "" 
-echo "" 
-echo "" 
+# rm ./setup_git.log
+# echo "--------------------"
+# echo "Removing the logfile"
+# echo "--------------------"
+# echo ""
+# echo ""
+# echo ""
 echo "------------------------------------------------------------------" 
 echo "Git and SSH have been configured with the provided name and email."
 echo "------------------------------------------------------------------"
