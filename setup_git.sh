@@ -80,7 +80,7 @@ else
 fi
 
 # Test the SSH connection to GitHub
-log_and_run "echo 'yes' | ssh -T git@github.com"
+log_and_run "ssh -T git@github.com"
 echo "" | tee -a "$log_file"
 echo "" | tee -a "$log_file"
 echo "" | tee -a "$log_file"
