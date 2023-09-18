@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env sh
 
 # Ensure the script is being run as root
 if [ "$(id -u)" != "0" ]; then
@@ -14,4 +14,3 @@ echo "$USERNAME ALL=(ALL:ALL) ALL" > "/etc/sudoers.d/$USERNAME"
 chmod 0440 "/etc/sudoers.d/$USERNAME"
 
 echo "Added $USERNAME to sudoers."
-
