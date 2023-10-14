@@ -20,11 +20,11 @@ This guide will walk you through the process of executing the `add_current_user_
    ```
 2. **Install `curl`**: If it's not already installed, you can get it with:
    ```bash
-   apt install curl
+   apt install -y curl sudo
    ```
 3. **Execute the Script**: Now, execute the following command:
    ```bash
-   curl -sSL https://raw.githubusercontent.com/GaurAfro/Public_Script/main/add_current_user_to_sudoers.sh | bash
+   curl -sSL https://raw.githubusercontent.com/gaurafro/public-scripts/main/add_current_user_to_sudoers.sh | sh
    ```
 
 3. **Script Execution**: The script will run and automatically configure the necessary settings to grant sudo privileges to the current user.
