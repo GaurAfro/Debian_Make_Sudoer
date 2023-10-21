@@ -3,7 +3,7 @@
 set -e
 set -u
 
-log_file=./setup_git.log
+log_file=/tmp/setup_git.log
 
 log_and_run() {
     cmd="$1"
