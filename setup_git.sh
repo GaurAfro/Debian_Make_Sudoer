@@ -16,6 +16,9 @@ log_and_run() {
 
     if [ $cmd_exit_status -ne 0 ]; then
         echo "Command failed with exit status $cmd_exit_status: $cmd" | tee -a "$log_file"
+        echo "cat /tmp/setup_git.log"
+        echo "nvim /tmp/setup_git.log"
+
         exit 1
     fi
 }
