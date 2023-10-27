@@ -1,11 +1,11 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 if [ -z "$test_setup" ]; then
     set -e
     set -u
 
-    tmp_log_file=$(mktemp)
+    tmp_log_file=$(sudo mktemp)
 
-    teesudo() { sudo tee -a "$tmp_log_file"; }
+    teesudo() { tee -a "$tmp_log_file"; }
     teetmp() { tee -a "$tmp_log_file"; }
 
     readeable_log_file_before() {
@@ -117,8 +117,8 @@ if [ -z "$test_setup" ]; then
     readeable_log_file_after
     exit 0
 else
-    username=$(if test -z "$username"; then echo "Provide your username: "; read -r username; fi)
-    email=$(if test -z "$email"; then echo "Provide your email: "; read -r email; fi)
+    username=$(if test -z "$username"; then read -rp "Provide your username: " username; fi)
+    email=$(if test -z "$email"; then read -rp "Provide your email: " email; fi)
     git config --global user.name "$username"
     git config --global user.email "$email"
     ssh_key_path="$HOME/.ssh/id_ed25519"
