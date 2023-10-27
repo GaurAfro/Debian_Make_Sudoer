@@ -117,8 +117,8 @@ if [ -z "$test_setup" ]; then
     readeable_log_file_after
     exit 0
 else
-    username="$(if test -z "$username"; then echo "Provide your username: "; read -r username; fi)"
-    email="$(if test -z "$email"; then echo "Provide your email: "; read -r  email; fi)"
+    username=$(if test -z "$username"; then echo "Provide your username: "; read -r username; fi)
+    email=$(if test -z "$email"; then echo "Provide your email: "; read -r email; fi)
     git config --global user.name "$username"
     git config --global user.email "$email"
     ssh_key_path="$HOME/.ssh/id_ed25519"
@@ -129,8 +129,8 @@ else
         ssh-add "$ssh_key_path" && echo 'Added the SSH Key'
     fi
     if command -v gh > /dev/null 2>&1; then
-        logged_in=$(if test -z $logged_in; then if test "$(gh auth status | grep -c "Logged in to github.com")" -ne 0; then echo "true"; else echo "false"; fi; fi)
-        if [ $logged_in = "false" ]; then
+        logged_in=$(if test -z "$logged_in"; then if test "$(gh auth status | grep -c "Logged in to github.com")" -ne 0; then echo "true"; else echo "false"; fi; fi)
+        if [ "$logged_in" = "false" ]; then
             gh auth login -s 'user:email,read:org,repo,write:org,notifications' -p ssh
         fi
         test_ssh=$(ssh -T git@github.com)
