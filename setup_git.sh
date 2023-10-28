@@ -5,35 +5,35 @@ if [ -z "$test_setup" ]; then
 
     tmp_log_file=$(sudo mktemp)
 
-    teesudo() { tee -a "$tmp_log_file"; }
+    # teetmp() { sudo tee -a "$tmp_log_file"; }
     teetmp() { tee -a "$tmp_log_file"; }
 
     readeable_log_file_before() {
-        echo "" | teesudo
-        echo "" | teesudo
-        echo "---------------------------------------------------------------" | teesudo
+        echo "" | teetmp
+        echo "" | teetmp
+        echo "---------------------------------------------------------------" | teetmp
     }
 
     readeable_log_file_after() {
-        echo "---------------------------------------------------------------" | teesudo
-        echo "" | teesudo
-        echo "" | teesudo
+        echo "---------------------------------------------------------------" | teetmp
+        echo "" | teetmp
+        echo "" | teetmp
     }
 
 
     log_and_run() {
         cmd="$1"
         readeable_log_file_before
-        echo "Executing: $cmd" | teesudo
+        echo "Executing: $cmd" | teetmp
         readeable_log_file_after
 
         set +e
-        eval "$cmd" 2>&1 | teesudo
+        eval "$cmd" 2>&1 | teetmp
         cmd_exit_status=$?
         set -e
 
         if [ $cmd_exit_status -ne 0 ]; then
-            echo "Command failed with exit status $cmd_exit_status: $cmd" | teesudo
+            echo "Command failed with exit status $cmd_exit_status: $cmd" | teetmp
             mv "$tmp_log_file" ./setup_git.log
 
             echo "cat ./setup_git.log"
@@ -44,11 +44,11 @@ if [ -z "$test_setup" ]; then
     }
 
     readeable_log_file_before
-    echo "$(date) Starting the Setup for Git & GitHub CLI..." | teesudo
+    echo "$(date) Starting the Setup for Git & GitHub CLI..." | teetmp
     readeable_log_file_after
 
     readeable_log_file_before
-    echo "Created a log file in the same directory of this script location" | teesudo
+    echo "Created a log file in the same directory of this script location" | teetmp
     readeable_log_file_after
 
     # Prompt user for name and email only if they are not provided
@@ -92,7 +92,7 @@ if [ -z "$test_setup" ]; then
     # Authenticate GitHub CLI
     if command -v gh > /dev/null 2>&1; then
         readeable_log_file_before
-        echo "GitHub Cli is installed" | teesudo
+        echo "GitHub Cli is installed" | teetmp
         readeable_log_file_after
 
         readeable_log_file_before
@@ -100,9 +100,9 @@ if [ -z "$test_setup" ]; then
         readeable_log_file_after
     else
         readeable_log_file_before
-        echo "See the Linux/BSD page for distro speciffic instuctions"      | teesudo
-        echo "https://github.com/cli/cli/blob/trunk/docs/install_linux.md"  | teesudo
-        echo "GitHub Cli is not installed" | teesudo
+        echo "See the Linux/BSD page for distro speciffic instuctions"      | teetmp
+        echo "https://github.com/cli/cli/blob/trunk/docs/install_linux.md"  | teetmp
+        echo "GitHub Cli is not installed" | teetmp
         readeable_log_file_after
         exit 1
     fi
