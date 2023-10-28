@@ -51,10 +51,19 @@ if [ -z "$test_setup" ]; then
     readeable_log_file_before
     echo "Created a log file in the same directory of this script location" | teetmp
     readeable_log_file_after
-
+    username="${username:-}"
+    email="${email:-}"
     # Prompt user for name and email only if they are not provided
-    username=$(if test -z "$username"; then read -rp "Provide your username: " username; fi)
-    email=$(if test -z "$email"; then read -rp "Provide your email: " email; fi)
+    if [ -z "$username" ]; then
+        readeable_log_file_before
+        read -rp "Enter your username: "  username && log_and_run "echo 'Name acquired'"
+        readeable_log_file_after
+    fi
+    if [ -z "$email" ]; then
+        readeable_log_file_before
+        read -rp "Enter your email: "  email && log_and_run "echo 'Email acquired'"
+        readeable_log_file_after
+    fi
 
     # Set the provided name and email for git
     readeable_log_file_before
