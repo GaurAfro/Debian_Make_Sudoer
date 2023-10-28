@@ -3,9 +3,10 @@ if [ -z "$test_setup" ]; then
     set -e
     set -u
 
-    tmp_log_file=$(sudo mktemp)
-
+    # tmp_log_file=$(sudo mktemp)
     # teetmp() { sudo tee -a "$tmp_log_file"; }
+
+    tmp_log_file=$(mktemp)
     teetmp() { tee -a "$tmp_log_file"; }
 
     readeable_log_file_before() {
