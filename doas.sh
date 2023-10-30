@@ -66,9 +66,12 @@ if [ -f /etc/doas.conf ]; then
 
     # Loop over each line to append
     while IFS= read -r line; do
-        # Check if the line already exists for the user in doas.conf
-        if ! grep -Fq "$line" /etc/doas.conf; then
-            echo "$line" | sed "s/USER/$actual_user/g" | tee -a /etc/doas.conf > /dev/null
+        # Replace USER with actual_user in the line before the grep check
+        line_replaced=$(echo "$line" | sed "s/USER/$actual_user/g")
+
+        # Check if the replaced line already exists for the user in doas.conf
+        if ! grep -Fxq "$line_replaced" /etc/doas.conf; then
+            echo "$line_replaced" | tee -a /etc/doas.conf > /dev/null
         fi
     done <<EOF
 permit persist keepenv USER as root
