@@ -67,7 +67,8 @@ if [ -f /etc/doas.conf ]; then
     # Loop over each line to append
     while IFS= read -r line; do
         # Replace USER with actual_user in the line before the grep check
-        line_replaced=$(echo "$line" | sed "s/USER/$actual_user/g")
+        # line_replaced=$(echo "$line" | sed "s/USER/$actual_user/g")
+        line_replaced="${line//USER/$actual_user}"
 
         # Check if the replaced line already exists for the user in doas.conf
         if ! grep -Fxq "$line_replaced" /etc/doas.conf; then
