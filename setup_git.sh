@@ -7,7 +7,7 @@ if [ -z "$test_setup" ]; then
     # teetmp() { sudo tee -a "$tmp_log_file"; }
 
     tmp_log_file=$(mktemp)
-    teetmp() { tee -a "$tmp_log_file"; }
+    teetmp() { tee -a "$tmp_log_file" /dev/tty; }
 
     readeable_log_file_before() {
         echo "" | teetmp
@@ -20,7 +20,6 @@ if [ -z "$test_setup" ]; then
         echo "" | teetmp
         echo "" | teetmp
     }
-
 
     log_and_run() {
         cmd="$1"
@@ -119,8 +118,8 @@ if [ -z "$test_setup" ]; then
     readeable_log_file_after
     exit 0
 else
-    username=$(if test -z "$username"; then read -rp "Provide your username: " username; fi)
-    email=$(if test -z "$email"; then read -rp "Provide your email: " email; fi)
+    username=$(if test -z "${username-}"; then read -rp "Provide your username: " username; fi)
+    email=$(if test -z "${email-}"; then read -rp "Provide your email: " email; fi)
     git config --global user.name "$username"
     git config --global user.email "$email"
     ssh_key_path="$HOME/.ssh/id_ed25519"
@@ -136,7 +135,7 @@ else
             gh auth login -s 'user:email,read:org,repo,write:org,notifications' -p ssh
         fi
         test_ssh=$(ssh -T git@github.com)
-        if [ "$(echo "$test_ssh" | grep -c "successfully authenticated")" -ne 0 ]; then
+        if [ "$(echo "$test_ssh" 2>&1 | grep -c "successfully authenticated")" -ne 0 ]; then
             echo "Git and SSH have been configured with the provided name and email."
         else
             echo "Git and SSH have been configured with the provided name and email."
