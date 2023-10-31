@@ -9,9 +9,8 @@ readable_comments(){
 
 readable_comments "This script will install Arch Linux on your system."
 
-readable_comments "This script will exit on error"
-
-set -e
+# readable_comments "This script will exit on error"
+# set -e
 
 # readable_comments "This script will output what it does"
 # set -x
@@ -64,7 +63,7 @@ run_step_check() {
 
 readable_comments "Function to mark the current step as successful and move to the next"
 success_step() {
-  ((current_step++))
+  current_step=$((current_step + 1))
   export current_step
 }
 
@@ -72,7 +71,7 @@ readable_comments "Parsing flags for test, auto modes, and update-step"
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --auto)
-      export mode="auto"
+      mode="auto"
       shift
       ;;
     --test)
@@ -118,6 +117,14 @@ readable_comments "Your code here, using 'run_step_check' as needed."
 
 run_step_check 1 echo "This is step 1"
 run_step_check 2 echo "This is step 2"
+run_step_check 3 echo "This is step 3"
+run_step_check 4 echo "This is step 4"
+run_step_check 5 echo "This is step 5"
+run_step_check 6 echo "This is step 6"
+run_step_check 7 echo "This is step 7"
+run_step_check 8 echo "This is step 8"
+
+exit 0
 
 readable_comments "Check if all required variables are set and prompt if missing"
 for varname in cryptlvmpassword hostname username userpassword rootpassword; do
