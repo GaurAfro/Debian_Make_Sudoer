@@ -7,29 +7,43 @@ readable_comments(){
     printf '%*s\n\n\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' '-'
 }
 
+format_center_text() {
+  local line
+  while IFS= read -r line; do
+    local cols
+    cols=$(tput cols)
+    local padding=$(( (cols - ${#line}) / 2 ))
+    printf "%${padding}s%s\n" " " "$line"
+  done
+}
+
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+  readable_comments "showing help"
+
+  # Prepare your help text
+  help_text="This script will install Arch Linux on your system.
+  Usage: ./arch-install.sh [OPTIONS]
+  Options:
+    --auto, -a: Run the script in auto mode
+    --test, -t: Run the script in test mode
+    --step, -s: Run the script starting at the specified step
+    --cryptlvmpassword, -c: Set the cryptlvm password
+    --hostname, -H: Set the hostname
+    --username, -n: Set the username
+    --userpassword, -p: Set the user password
+    --rootpassword, -P: Set the root password
+    --verbose, -v: Output what the script does
+    --variables, -V: Output the variables used by the script"
+
+  # Pipe the help text into format_center_text, then into less
+  echo "$help_text" | format_center_text | less -c
+  exit 0
+fi
+
 readable_comments "This script will install Arch Linux on your system."
 
 readable_comments "This script will exit on error"
 set -e
-
-if [[ "$1" == "--help" || "$1" == "-h" ]]; then
-    less <<EOF
-This script will install Arch Linux on your system.
-Usage: ./arch-install.sh [OPTIONS]
-Options:
-  --auto, -a: Run the script in auto mode
-  --test, -t: Run the script in test mode
-  --step, -s: Run the script starting at the specified step
-  --cryptlvmpassword, -c: Set the cryptlvm password
-  --hostname, -H: Set the hostname
-  --username, -n: Set the username
-  --userpassword, -p: Set the user password
-  --rootpassword, -P: Set the root password
-  --verbose, -v: Output what the script does
-  --variables, -V: Output the variables used by the script
-EOF
-    exit 0
-fi
 
 readable_comments "Import the variables from arch-install-variables.env if it exists"
 if [ ! -f arch-install-variables.env ]; then
