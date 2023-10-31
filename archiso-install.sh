@@ -42,7 +42,7 @@ run_step_check() {
                 ;;
                 [nN]*)
                     printf "Stopped at step %s as per user request.\n" "$step"
-                    exit 1
+                    exit 0
                     ;;
                 *)
                     printf "Invalid option.\n"
@@ -50,17 +50,17 @@ run_step_check() {
                     ;;
             esac
         fi
-        if "$@"; then
-            success_step
-        else
-            printf "Step %s failed. Manual intervention needed.\n" "$step"
+        "$@" || {
+            local exit_status=$?
+            printf "Step %s failed with exit status %d. Manual intervention needed.\n" "$step" "$exit_status"
             exit 1
-        fi
+        }
+        success_step
     else
         if [ "$step" -le "$((current_step))" ]; then
             printf "Step %s was already completed.\n" "$step"
         else
-            printf "Step %s is too high, we are missing:\n" "$step"
+            printf "Step %s is too high; we are missing:\n" "$step"
             for ((i=$((current_step + 1)); i<$step; i++)); do
                 printf "Missing step: %s\n" "$i"
             done
