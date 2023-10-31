@@ -57,7 +57,7 @@ run_step_check() {
       exit 1
     fi
   else
-    printf "Step %s is not the next logical step.\n" "$step"
+    printf "Step %s was was already completed.\n" "$step"
   fi
 }
 
@@ -131,8 +131,8 @@ run_step_check 13 echo "${userpassword}"
 run_step_check 14 echo "${rootpassword}"
 run_step_check 15 echo "${hostname}"
 run_step_check 16 echo "${mode}"
+run_step_check 18 echo "This is step is to produce an error"; firefox
 run_step_check 12 echo "This is step is  to be skipped"
-run_step_check 18 echo "This is step is to produce an error"
 
 exit 0
 
