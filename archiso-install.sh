@@ -13,18 +13,21 @@ readable_comments "This script will exit on error"
 set -e
 
 if [[ "$1" == "--help" || "$1" == "-h" ]]; then
-    echo "This script will install Arch Linux on your system."
-    echo "Usage: ./arch-install.sh [OPTIONS]"
-    echo "Options:"
-    echo "  --auto: Run the script without prompting the user for input"
-    echo "  --test: Run the script with test values"
-    echo "  --update-step: Update the current step to the specified value"
-    echo "  --cryptlvmpassword: The password to use for the LUKS container"
-    echo "  --hostname: The hostname to use for the system"
-    echo "  --username: The username to use for the system"
-    echo "  --userpassword: The password to use for the user"
-    echo "  --rootpassword: The password to use for the root user"
-    echo "  --verbose: Output what the script is doing"
+    cat <<EOF | more
+This script will install Arch Linux on your system.
+Usage: ./arch-install.sh [OPTIONS]
+Options:
+  --auto, -a: Run the script in auto mode
+  --test, -t: Run the script in test mode
+  --step, -s: Run the script starting at the specified step
+  --cryptlvmpassword, -c: Set the cryptlvm password
+  --hostname, -H: Set the hostname
+  --username, -n: Set the username
+  --userpassword, -p: Set the user password
+  --rootpassword, -P: Set the root password
+  --verbose, -v: Output what the script does
+  --variables, -V: Output the variables used by the script
+EOF
     exit 0
 fi
 
@@ -163,14 +166,14 @@ done
 readable_comments "Your code here, using 'run_step_check' as needed."
 
 readable_comments "Exporting variables for reference if needed in future re-runs"
-run_step_check 1 cat <<EOF > arch-install-variables.env
+run_step_check 1 bash -c 'cat <<EOF > arch-install-variables.env
 export current_step="${current_step}"
 export cryptlvmpassword="${cryptlvmpassword}"
 export username="${username}"
 export userpassword="${userpassword}"
 export rootpassword="${rootpassword}"
 export hostname="${hostname}"
-EOF
+EOF'
 
 run_step_check 2 echo "This is step 2"
 run_step_check 3 echo "This is step 3"
