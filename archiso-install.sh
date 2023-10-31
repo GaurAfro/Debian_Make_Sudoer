@@ -32,33 +32,41 @@ readable_comments "Initialize these variables only if they are not set"
 readable_comments "Function to run the command and check its status"
 
 run_step_check() {
-  local step="$1"; shift
-  if [ "$step" -eq "$((current_step + 1))" ]; then
-    if [[ "$mode" != "auto" ]]; then
-      printf "About to run: %s [Y/n] " "$*"
-      read -r response
-      case "$response" in
-        [yY]* | "" | " ")
-          ;;
-        [nN]*)
-          printf "Stopped at step %s as per user request.\n" "$step"
-          exit 1
-          ;;
-        *)
-          printf "Invalid option.\n"
-          exit 1
-          ;;
-      esac
-    fi
-    if "$@"; then
-      success_step
+    local step="$1"; shift
+    if [ "$step" -eq "$((current_step + 1))" ]; then
+        if [[ "$mode" != "auto" ]]; then
+            printf "About to run: %s [Y/n] " "$*"
+            read -r response
+            case "$response" in
+                [yY]* | "" | " ")
+                ;;
+                [nN]*)
+                    printf "Stopped at step %s as per user request.\n" "$step"
+                    exit 1
+                    ;;
+                *)
+                    printf "Invalid option.\n"
+                    exit 1
+                    ;;
+            esac
+        fi
+        if "$@"; then
+            success_step
+        else
+            printf "Step %s failed. Manual intervention needed.\n" "$step"
+            exit 1
+        fi
     else
-      printf "Step %s failed. Manual intervention needed.\n" "$step"
-      exit 1
+        if [ "$step" -le "$((current_step))" ]; then
+            printf "Step %s was already completed.\n" "$step"
+        else
+            printf "Step %s is too high, we are missing:\n" "$step"
+            for ((i=$((current_step + 1)); i<$step; i++)); do
+                printf "Missing step: %s\n" "$i"
+            done
+            exit 1
+        fi
     fi
-  else
-    printf "Step %s was was already completed.\n" "$step"
-  fi
 }
 
 readable_comments "Function to mark the current step as successful and move to the next"
@@ -131,7 +139,7 @@ run_step_check 13 echo "${userpassword}"
 run_step_check 14 echo "${rootpassword}"
 run_step_check 15 echo "${hostname}"
 run_step_check 16 echo "${mode}"
-run_step_check 18 echo "This is step is to produce an error"; firefox
+run_step_check 17 echo "This is step is to produce an error" && firefox
 run_step_check 12 echo "This is step is  to be skipped"
 
 exit 0
