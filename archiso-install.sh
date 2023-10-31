@@ -29,7 +29,11 @@ if [[ "$1" == "--help" || "$1" == "-h" ]]; then
 fi
 
 readable_comments "Import the variables from arch-install-variables.env if it exists"
-if [ -f arch-install-variables.env ]; then
+if [ ! -f arch-install-variables.env ]; then
+    readable_comments "arch-install-variables.env does not exist. Creating it."
+    touch arch-install-variables.env
+else
+    readable_comments "arch-install-variables.env exists. Sourcing it."
     . arch-install-variables.env
 fi
 
