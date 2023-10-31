@@ -13,18 +13,18 @@ readable_comments "This script will exit on error"
 set -e
 
 if [[ "$1" == "--help" || "$1" == "-h" ]]; then
-    readable_comments "This script will install Arch Linux on your system."
-    readable_comments "Usage: ./arch-install.sh [OPTIONS]"
-    readable_comments "Options:"
-    readable_comments "  --auto: Run the script without prompting the user for input"
-    readable_comments "  --test: Run the script with test values"
-    readable_comments "  --update-step: Update the current step to the specified value"
-    readable_comments "  --cryptlvmpassword: The password to use for the LUKS container"
-    readable_comments "  --hostname: The hostname to use for the system"
-    readable_comments "  --username: The username to use for the system"
-    readable_comments "  --userpassword: The password to use for the user"
-    readable_comments "  --rootpassword: The password to use for the root user"
-    readable_comments "  --verbose: Output what the script is doing"
+    echo "This script will install Arch Linux on your system."
+    echo "Usage: ./arch-install.sh [OPTIONS]"
+    echo "Options:"
+    echo "  --auto: Run the script without prompting the user for input"
+    echo "  --test: Run the script with test values"
+    echo "  --update-step: Update the current step to the specified value"
+    echo "  --cryptlvmpassword: The password to use for the LUKS container"
+    echo "  --hostname: The hostname to use for the system"
+    echo "  --username: The username to use for the system"
+    echo "  --userpassword: The password to use for the user"
+    echo "  --rootpassword: The password to use for the root user"
+    echo "  --verbose: Output what the script is doing"
     exit 0
 fi
 
@@ -152,7 +152,7 @@ done
 readable_comments "Your code here, using 'run_step_check' as needed."
 
 readable_comments "Exporting variables for reference if needed in future re-runs"
-cat <<EOF > arch-install-variables.env
+run_step_check 1 cat <<EOF > arch-install-variables.env
 export current_step="${current_step}"
 export cryptlvmpassword="${cryptlvmpassword}"
 export username="${username}"
