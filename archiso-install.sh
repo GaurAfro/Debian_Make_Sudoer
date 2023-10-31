@@ -13,9 +13,8 @@ readable_comments "This script will exit on error"
 
 set -e
 
-readable_comments "This script will output what it does"
-
-set -x
+# readable_comments "This script will output what it does"
+# set -x
 
 
 readable_comments "Initialize the last successfully completed step, only if it's not already set"
@@ -73,7 +72,7 @@ readable_comments "Parsing flags for test, auto modes, and update-step"
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --auto)
-      mode="auto"
+      export mode="auto"
       shift
       ;;
     --test)
