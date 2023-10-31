@@ -13,7 +13,7 @@ readable_comments "This script will exit on error"
 set -e
 
 if [[ "$1" == "--help" || "$1" == "-h" ]]; then
-    cat <<EOF | less
+    less <<EOF
 This script will install Arch Linux on your system.
 Usage: ./arch-install.sh [OPTIONS]
 Options:
