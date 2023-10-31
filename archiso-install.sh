@@ -68,7 +68,7 @@ run_step_check() {
         if [[ "$mode" != "auto" ]]; then
             printf '\n\n%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' '-'
             printf "About to run: %s [Y/n] \n" "$*"
-            printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' '-'
+            printf '\n%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' '-'
             read -r response
             case "$response" in
                 [yY]* | "" | " ")
