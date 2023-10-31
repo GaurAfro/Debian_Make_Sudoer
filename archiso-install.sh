@@ -9,11 +9,9 @@ readable_comments(){
 
 readable_comments "This script will install Arch Linux on your system."
 
-# readable_comments "This script will exit on error"
-# set -e
+readable_comments "This script will exit on error"
+set -e
 
-# readable_comments "This script will output what it does"
-# set -x
 
 
 readable_comments "Initialize the last successfully completed step, only if it's not already set"
@@ -22,6 +20,7 @@ readable_comments "Initialize the last successfully completed step, only if it's
 
 readable_comments "Initialize these variables only if they are not set"
 
+: "${current_step:=0}"
 : "${cryptlvmpassword:=}"
 : "${username:=}"
 : "${userpassword:=}"
@@ -50,6 +49,7 @@ run_step_check() {
                     ;;
             esac
         fi
+        printf "Running step %s\n" "$step"
         "$@" || {
             local exit_status=$?
             printf "Step %s failed with exit status %d. Manual intervention needed.\n" "$step" "$exit_status"
@@ -114,15 +114,26 @@ while [ "$#" -gt 0 ]; do
       export rootpassword="$2"
       shift 2
       ;;
+    --verbose)
+        readable_comments "This script will output what it does"
+        set -x
+        shift
+        ;;
     *)
-      printf "Unknown option: %s\n" "$1"
-      exit 1
-      ;;
+        printf "Unknown option: %s\n" "$1"
+        exit 1
+        ;;
   esac
 done
 
 readable_comments "Your code here, using 'run_step_check' as needed."
 
+export "{current_step}"
+export "{cryptlvmpassword}"
+export "{username}"
+export "{userpassword}"
+export "{rootpassword}"
+export "{hostname}"
 run_step_check 1 echo "This is step 1"
 run_step_check 2 echo "This is step 2"
 run_step_check 3 echo "This is step 3"
