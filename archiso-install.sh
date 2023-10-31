@@ -163,14 +163,14 @@ done
 readable_comments "Your code here, using 'run_step_check' as needed."
 
 readable_comments "Exporting variables for reference if needed in future re-runs"
-run_step_check 1 'cat <<EOF > arch-install-variables.env
+run_step_check 1 cat <<EOF > arch-install-variables.env
 export current_step="${current_step}"
 export cryptlvmpassword="${cryptlvmpassword}"
 export username="${username}"
 export userpassword="${userpassword}"
 export rootpassword="${rootpassword}"
 export hostname="${hostname}"
-EOF'
+EOF
 
 run_step_check 2 echo "This is step 2"
 run_step_check 3 echo "This is step 3"
