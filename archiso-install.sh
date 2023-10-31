@@ -50,13 +50,12 @@ run_step_check() {
                     ;;
             esac
         fi
-        if "$@"; then
-            success_step
-        else
+        "$@" || {
             local exit_status=$?
             printf "Step %s failed with exit status %d. Manual intervention needed.\n" "$step" "$exit_status"
             exit 1
-        fi
+        }
+        success_step
     else
         if [ "$step" -le "$((current_step))" ]; then
             printf "Step %s was already completed.\n" "$step"
@@ -140,8 +139,9 @@ run_step_check 13 echo "${userpassword}"
 run_step_check 14 echo "${rootpassword}"
 run_step_check 15 echo "${hostname}"
 run_step_check 16 echo "${mode}"
-run_step_check 17 echo "This is step is to produce an error" && firefox
 run_step_check 12 echo "This is step is  to be skipped"
+run_step_check 17 echo "This is step is to continue after skipping step 12"
+run_step_check 27 echo "This is step is to produce an error"
 
 exit 0
 
