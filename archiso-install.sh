@@ -12,7 +12,26 @@ readable_comments "This script will install Arch Linux on your system."
 readable_comments "This script will exit on error"
 set -e
 
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+    readable_comments "This script will install Arch Linux on your system."
+    readable_comments "Usage: ./arch-install.sh [OPTIONS]"
+    readable_comments "Options:"
+    readable_comments "  --auto: Run the script without prompting the user for input"
+    readable_comments "  --test: Run the script with test values"
+    readable_comments "  --update-step: Update the current step to the specified value"
+    readable_comments "  --cryptlvmpassword: The password to use for the LUKS container"
+    readable_comments "  --hostname: The hostname to use for the system"
+    readable_comments "  --username: The username to use for the system"
+    readable_comments "  --userpassword: The password to use for the user"
+    readable_comments "  --rootpassword: The password to use for the root user"
+    readable_comments "  --verbose: Output what the script is doing"
+    exit 0
+fi
 
+readable_comments "Import the variables from arch-install-variables.env if it exists"
+if [ -f arch-install-variables.env ]; then
+    . arch-install-variables.env
+fi
 
 readable_comments "Initialize the last successfully completed step, only if it's not already set"
 
@@ -128,13 +147,16 @@ done
 
 readable_comments "Your code here, using 'run_step_check' as needed."
 
+readable_comments "Exporting variables for reference if needed in future re-runs"
+run_step_check 1 cat <<EOF > arch-install-variables.env
 export current_step="${current_step}"
 export cryptlvmpassword="${cryptlvmpassword}"
 export username="${username}"
 export userpassword="${userpassword}"
 export rootpassword="${rootpassword}"
 export hostname="${hostname}"
-run_step_check 1 echo "This is step 1"
+EOF
+
 run_step_check 2 echo "This is step 2"
 run_step_check 3 echo "This is step 3"
 run_step_check 4 echo "This is step 4"
