@@ -101,11 +101,11 @@ success_step() {
 readable_comments "Parsing flags for test, auto modes, and update-step"
 while [ "$#" -gt 0 ]; do
   case "$1" in
-    --auto)
+    --auto | -a)
       mode="auto"
       shift
       ;;
-    --test)
+    --test | -t)
       export cryptlvmpassword="test"
       export username="test"
       export userpassword="test"
@@ -113,34 +113,45 @@ while [ "$#" -gt 0 ]; do
       export hostname="test"
       shift
       ;;
-    --update-step)
+    --step | -s)
+      # is this a integer?
+      if [[ "$2" =~ ^[0-9]+$ ]]; then
       export current_step="$2"
       shift 2
+      else
+        # if not, then set it to 0 and go to the next step
+        export current_step=0
+        shift
+      fi
       ;;
-    --cryptlvmpassword)
+    --cryptlvmpassword | -c)
       export cryptlvmpassword="$2"
       shift 2
       ;;
-    --hostname)
+    --hostname | -H)
       export hostname="$2"
       shift 2
       ;;
-    --username)
+    --username | -n)
       export username="$2"
       shift 2
       ;;
-    --userpassword)
+    --userpassword | -p)
       export userpassword="$2"
       shift 2
       ;;
-    --rootpassword)
+    --rootpassword | -P)
       export rootpassword="$2"
       shift 2
       ;;
-    --verbose)
+    --verbose | -v)
         readable_comments "This script will output what it does"
         set -x
         shift
+        ;;
+    --variables | -V)
+        cat arch-install-variables.env
+        exit 0
         ;;
     *)
         printf "Unknown option: %s\n" "$1"
@@ -152,14 +163,14 @@ done
 readable_comments "Your code here, using 'run_step_check' as needed."
 
 readable_comments "Exporting variables for reference if needed in future re-runs"
-run_step_check 1 cat <<EOF > arch-install-variables.env
+run_step_check 1 'cat <<EOF > arch-install-variables.env
 export current_step="${current_step}"
 export cryptlvmpassword="${cryptlvmpassword}"
 export username="${username}"
 export userpassword="${userpassword}"
 export rootpassword="${rootpassword}"
 export hostname="${hostname}"
-EOF
+EOF'
 
 run_step_check 2 echo "This is step 2"
 run_step_check 3 echo "This is step 3"
