@@ -66,7 +66,9 @@ run_step_check() {
     local step="$1"; shift
     if [ "$step" -eq "$((current_step + 1))" ]; then
         if [[ "$mode" != "auto" ]]; then
+            printf '\n\n%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' '-'
             printf "About to run: %s [Y/n] " "$*"
+            printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' '-'
             read -r response
             case "$response" in
                 [yY]* | "" | " ")
@@ -86,7 +88,9 @@ run_step_check() {
             printf "Step %s failed with exit status %d. Manual intervention needed.\n" "$step" "$exit_status"
             exit 1
         }
+        printf '\n\n%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' '-'
         printf "Finished step %s\n" "$step"
+        printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' '-'
         success_step
     else
         if [ "$step" -le "$((current_step))" ]; then
@@ -169,7 +173,6 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-readable_comments "Your code here, using 'run_step_check' as needed."
 
 readable_comments "Exporting variables for reference if needed in future re-runs"
 run_step_check 1 bash -c 'cat <<EOF > arch-install-variables.env
@@ -181,27 +184,28 @@ export rootpassword="${rootpassword}"
 export hostname="${hostname}"
 EOF'
 
+# readable_comments "Your code here, using 'run_step_check' as needed."
 run_step_check 2 echo "This is step 2"
 run_step_check 3 echo "This is step 3"
 run_step_check 4 echo "This is step 4"
 run_step_check 5 echo "This is step 5"
-run_step_check 6 echo "This is step 6"
-run_step_check 7 echo "This is step 7"
-run_step_check 8 echo "This is step 8"
-run_step_check 9 echo "This is step 9"
-run_step_check 10 echo "This is step 10"
-run_step_check 11 echo "${cryptlvmpassword}"
-run_step_check 12 echo "${username}"
-run_step_check 13 echo "${userpassword}"
-run_step_check 14 echo "${rootpassword}"
-run_step_check 15 echo "${hostname}"
-run_step_check 16 echo "${mode}"
-run_step_check 12 echo "This is step is  to be skipped"
-run_step_check 17 echo "This is step is to continue after skipping the current"
-run_step_check 27 echo "This is step is to produce an error or to be called directly"
-
-
+# run_step_check 6 echo "This is step 6"
+# run_step_check 7 echo "This is step 7"
+# run_step_check 8 echo "This is step 8"
+# run_step_check 9 echo "This is step 9"
+# run_step_check 10 echo "This is step 10"
+# run_step_check 11 echo "${cryptlvmpassword}"
+# run_step_check 12 echo "${username}"
+# run_step_check 13 echo "${userpassword}"
+# run_step_check 14 echo "${rootpassword}"
+# run_step_check 15 echo "${hostname}"
+# run_step_check 16 echo "${mode}"
+# run_step_check 12 echo "This is step is  to be skipped"
+# run_step_check 17 echo "This is step is to continue after skipping the current"
+# run_step_check 27 echo "This is step is to produce an error or to be called directly"
 exit 0
+
+
 
 readable_comments "Check if all required variables are set and prompt if missing"
 for varname in cryptlvmpassword hostname username userpassword rootpassword; do
