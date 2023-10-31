@@ -72,12 +72,12 @@ run_step_check() {
                     ;;
             esac
         fi
-        printf "Running step %s\n" "$step"
         "$@" || {
             local exit_status=$?
             printf "Step %s failed with exit status %d. Manual intervention needed.\n" "$step" "$exit_status"
             exit 1
         }
+        printf "Finished step %s\n" "$step"
         success_step
     else
         if [ "$step" -le "$((current_step))" ]; then
