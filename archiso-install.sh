@@ -123,6 +123,16 @@ run_step_check 5 echo "This is step 5"
 run_step_check 6 echo "This is step 6"
 run_step_check 7 echo "This is step 7"
 run_step_check 8 echo "This is step 8"
+run_step_check 9 echo "This is step 9"
+run_step_check 10 echo "This is step 10"
+run_step_check 11 echo "${cryptlvmpassword}"
+run_step_check 12 echo "${username}"
+run_step_check 13 echo "${userpassword}"
+run_step_check 14 echo "${rootpassword}"
+run_step_check 15 echo "${hostname}"
+run_step_check 16 echo "${mode}"
+run_step_check 12 echo "This is step is  to be skipped"
+run_step_check 18 echo "This is step is to produce an error"
 
 exit 0
 
