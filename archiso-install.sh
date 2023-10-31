@@ -128,12 +128,12 @@ done
 
 readable_comments "Your code here, using 'run_step_check' as needed."
 
-export "{current_step}"
-export "{cryptlvmpassword}"
-export "{username}"
-export "{userpassword}"
-export "{rootpassword}"
-export "{hostname}"
+export current_step
+export cryptlvmpassword
+export username
+export userpassword
+export rootpassword
+export hostname
 run_step_check 1 echo "This is step 1"
 run_step_check 2 echo "This is step 2"
 run_step_check 3 echo "This is step 3"
