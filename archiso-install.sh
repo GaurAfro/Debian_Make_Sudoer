@@ -148,7 +148,7 @@ done
 readable_comments "Your code here, using 'run_step_check' as needed."
 
 readable_comments "Exporting variables for reference if needed in future re-runs"
-run_step_check 1 echo <<EOF > arch-install-variables.env
+cat <<EOF > arch-install-variables.env
 export current_step="${current_step}"
 export cryptlvmpassword="${cryptlvmpassword}"
 export username="${username}"
