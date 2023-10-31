@@ -67,8 +67,8 @@ run_step_check() {
     if [ "$step" -eq "$((current_step + 1))" ]; then
         if [[ "$mode" != "auto" ]]; then
             printf '\n\n%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' '-'
-            printf "About to run: %s [Y/n] \n\n" "$*"
-            printf '\n\n%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' '-'
+            printf "About to run: %s [Y/n]\n" "$*"
+            printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' '-'
             read -r response
             case "$response" in
                 [yY]* | "" | " ")
@@ -88,8 +88,8 @@ run_step_check() {
             printf "Step %s failed with exit status %d. Manual intervention needed.\n" "$step" "$exit_status"
             exit 1
         }
-        printf '\n\n%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' '-'
-        printf "Finished step %s\n" "$step"
+        # printf '\n\n%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' '-'
+        printf "\nFinished step %s\n" "$step"
         printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' '-'
         success_step
     else
