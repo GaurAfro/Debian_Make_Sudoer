@@ -151,8 +151,9 @@ run_step_check 14 echo "${rootpassword}"
 run_step_check 15 echo "${hostname}"
 run_step_check 16 echo "${mode}"
 run_step_check 12 echo "This is step is  to be skipped"
-run_step_check 17 echo "This is step is to continue after skipping step 12"
-run_step_check 27 echo "This is step is to produce an error"
+run_step_check 17 echo "This is step is to continue after skipping the current"
+run_step_check 27 echo "This is step is to produce an error or to be called directly"
+
 
 exit 0
 
