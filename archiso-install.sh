@@ -318,7 +318,7 @@ fi
 if [[ "$skip_confirmation" == true || -z "$reformat_choice" || "$reformat_choice" =~ ^[yy]$ ]]; then
   if parted "${disk}" print 1>/dev/null 2>&1; then
     partitions_to_remove=$(parted "${disk}" print | awk '/^ / {print $1}')
-    if [[ ! -z "$partitions_to_remove" ]]; then
+    if [[ -n "$partitions_to_remove" ]]; then
       parted --script "${disk}" rm "$partitions_to_remove"
     fi
   fi
@@ -512,8 +512,11 @@ fonts=("terminus-font")
 # All groups
 all_groups=("base_and_dev" "network" "filesystem" "shell_and_terminal" "git_vc" "boot_efi" "utilities" "audio" "graphics" "clipboard" "virtualization" "wm" "fonts")
 
+# Modified add_packages function
 add_packages() {
-  for pkg in "$@"; do
+  local array_name="$1[@]"
+  local array=("${!array_name}")
+  for pkg in "${array[@]}"; do
     packages_to_install+=("$pkg")
   done
 }
@@ -530,9 +533,10 @@ install_packages() {
   fi
 }
 
+# Modified loop to add packages
 readable_comments "Iterate over each group and add packages"
 for group in "${all_groups[@]}"; do
-  add_packages "${!group[@]}"
+  add_packages "$group"
 done
 
 install_packages
@@ -610,9 +614,6 @@ if [ -z "$rootpassword" ]; then
   read -rp "Enter the root password: " rootpassword
 fi
 
-# Set the root password
-echo -e "$rootpassword\n$rootpassword" | passwd
-
 # Check for username
 if [ -z "$username" ]; then
   read -rp "Enter the username: " username
@@ -626,8 +627,8 @@ fi
 # Create user, set shell, and add to 'wheel' group
 useradd -m -G wheel -s /usr/bin/fish "$username"
 
-# Set the user password
-echo "${username}:${userpassword}" | chpasswd
+# Set passwords for root and user in one go
+echo -e "root:${rootpassword}\n${username}:${userpassword}" | chpasswd
 
 # Create a sudoers file for the user
 echo "$username ALL=(ALL) ALL" > "/etc/sudoers.d/$username"
