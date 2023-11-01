@@ -319,7 +319,10 @@ fi
 # Proceed with reformatting if in 'auto' mode or user confirms
 if [[ "$skip_confirmation" == true || -z "$reformat_choice" || "$reformat_choice" =~ ^[Yy]$ ]]; then
   if parted "${disk}" print 1>/dev/null 2>&1; then
-    parted "${disk}" rm "$(parted "${disk}" print | awk '/^ / {print $1}')"
+    partitions_to_remove=$(parted "${disk}" print | awk '/^ / {print $1}')
+    if [[ ! -z "$partitions_to_remove" ]]; then
+      parted "${disk}" rm "$partitions_to_remove"
+    fi
   fi
 
   echo "Creating new partitions..."
