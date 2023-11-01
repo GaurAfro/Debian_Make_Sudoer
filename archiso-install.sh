@@ -400,15 +400,20 @@ done
 readable_comments "Unmount existing subvolumes recursively from /mnt"
 umount -R -v /mnt
 
-readable_comments "Create directories and mount subvolumes"
+# Explicitly mount the rootfs subvolume first
+readable_comments "Explicitly mounting rootfs subvolume"
+mount -t btrfs -o "${mount_opts},subvolid=@rootfs" "$device" "/mnt"
+
+# Your existing loop to mount other subvolumes
+readable_comments "Mounting other subvolumes"
 for name in "${!subvol_dirs[@]}"; do
+  # Skip rootfs since it's already mounted
+  if [[ "$name" == "@rootfs" ]]; then
+    continue
+  fi
   dir=${subvol_dirs[$name]}
-
-  # Create the directory if it doesn't exist
   mkdir -p "$dir"
-
-  # Mount the subvolume
-  mount -v -t btrfs -o "${mount_opts},subvolid=@${name}" "$device" "$dir"
+  mount -t btrfs -o "${mount_opts},subvolid=${name}" "$device" "$dir"
 done
 
 
