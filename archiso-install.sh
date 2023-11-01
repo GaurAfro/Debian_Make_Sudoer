@@ -306,7 +306,6 @@ if [ ! -d "/sys/firmware/efi" ]; then
   readable_comment "Booted in Legacy mode. Please boot in UEFI mode."
   exit 1
 fi
-
 # Skip the confirmation if in 'auto' mode
 if [[ "$mode" == "auto" ]]; then
   skip_confirmation=true
@@ -315,29 +314,28 @@ else
   reformat_choice=$(echo "$reformat_choice" | tr -d '[:space:]')
   skip_confirmation=false
 fi
-
 # Proceed with reformatting if in 'auto' mode or user confirms
-if [[ "$skip_confirmation" == true || -z "$reformat_choice" || "$reformat_choice" =~ ^[Yy]$ ]]; then
+if [[ "$skip_confirmation" == true || -z "$reformat_choice" || "$reformat_choice" =~ ^[yy]$ ]]; then
   if parted "${disk}" print 1>/dev/null 2>&1; then
     partitions_to_remove=$(parted "${disk}" print | awk '/^ / {print $1}')
     if [[ ! -z "$partitions_to_remove" ]]; then
-      parted "${disk}" rm "$partitions_to_remove"
+      parted --script "${disk}" rm "$partitions_to_remove"
     fi
   fi
 
-  echo "Creating new partitions..."
-  parted "${disk}" mklabel gpt
-  parted "${disk}" mkpart primary fat32 0% 512MiB
-  parted "${disk}" mkpart primary ext4 512MiB 2048MiB
-  parted "${disk}" mkpart primary 2048MiB 95%
-  parted "${disk}" set 1 esp on
-  parted "${disk}" set 2 boot on
+  echo "creating new partitions..."
+  parted --script "${disk}" mklabel gpt
+  parted --script "${disk}" mkpart primary fat32 0% 512mib
+  parted --script "${disk}" mkpart primary ext4 512mib 2048mib
+  parted --script "${disk}" mkpart primary 2048mib 95%
+  parted --script "${disk}" set 1 esp on
+  parted --script "${disk}" set 2 boot on
 
-  echo "Formatting partitions..."
-  mkfs.fat -F32 "${disk}1"
+  echo "formatting partitions..."
+  mkfs.fat -f32 "${disk}1"
   mkfs.ext4 "${disk}2"
 else
-  echo "Skipping disk reformatting."
+  echo "skipping disk reformatting."
 fi
 
 readable_comments "Feed YES and the password into cryptsetup with the label 'cryptlvm'"
