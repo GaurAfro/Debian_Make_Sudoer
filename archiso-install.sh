@@ -187,7 +187,7 @@ readable_comments "Parsing flags for test, auto modes, and update-step"
 while [ "$#" -gt 0 ]; do
 case "$1" in
   --auto | -a)
-    mode="auto"
+    export mode="auto"
     shift
     ;;
   --test | -t)
@@ -307,13 +307,20 @@ if [ ! -d "/sys/firmware/efi" ]; then
   exit 1
 fi
 
-# Read input and trim leading/trailing white spaces
-read -rp "Do you want to reformat the disk? This will erase all data on it. Press [Y, space, or Enter] to proceed: " reformat_choice
-reformat_choice=$(echo "$reformat_choice" | tr -d '[:space:]')
+# Skip the confirmation if in 'auto' mode
+if [[ "$mode" == "auto" ]]; then
+  skip_confirmation=true
+else
+  read -rp "Do you want to reformat the disk? This will erase all data on it. Press [Y, space, or Enter] to proceed: " reformat_choice
+  reformat_choice=$(echo "$reformat_choice" | tr -d '[:space:]')
+  skip_confirmation=false
+fi
 
-if [[ "$mode" == "auto" || -z "$reformat_choice" || "$reformat_choice" =~ ^[Yy]$ ]]; then
-  echo "Erasing all partitions..."
-  parted "${disk}" rm "$(parted "${disk}" print | awk '/^ / {print $1}')"
+# Proceed with reformatting if in 'auto' mode or user confirms
+if [[ "$skip_confirmation" == true || -z "$reformat_choice" || "$reformat_choice" =~ ^[Yy]$ ]]; then
+  if parted "${disk}" print 1>/dev/null 2>&1; then
+    parted "${disk}" rm "$(parted "${disk}" print | awk '/^ / {print $1}')"
+  fi
 
   echo "Creating new partitions..."
   parted "${disk}" mklabel gpt
