@@ -332,7 +332,7 @@ if [[ "$skip_confirmation" == true || -z "$reformat_choice" || "$reformat_choice
   parted --script "${disk}" set 2 boot on
 
   echo "formatting partitions..."
-  mkfs.fat -f32 "${disk}1"
+  mkfs.fat -F32 "${disk}1"
   mkfs.ext4 "${disk}2"
 else
   echo "skipping disk reformatting."
