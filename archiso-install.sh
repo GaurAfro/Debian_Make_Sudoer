@@ -43,7 +43,8 @@ if [ ! -f arch-install-variables.env ]; then
     touch arch-install-variables.env
 else
     readable_comments "arch-install-variables.env exists. Sourcing it."
-    . arch-install-variables.env
+    # shellcheck disable=SC1091
+    . ./arch-install-variables.env
 fi
 
 readable_comments "Initialize the last successfully completed step, only if it's not already set"
@@ -59,6 +60,7 @@ readable_comments "Initialize these variables only if they are not set"
 : "${rootpassword:=}"
 : "${hostname:=}"
 : "${mode:=}"
+: "${disk:=}"
 
 readable_comments "Function to run the command and check its status"
 
@@ -97,7 +99,7 @@ run_step_check() {
             printf "Step %s was already completed.\n" "$step"
         else
             printf "Step %s is too high; we are missing:\n" "$step"
-            for ((i=$((current_step + 1)); i<$step; i++)); do
+            for ((i=current_step + 1; i<step; i++)); do
                 printf "Missing step: %s\n" "$i"
             done
             exit 1
@@ -111,130 +113,227 @@ success_step() {
   export current_step
 }
 
+choose_disk() {
+  # List all available disks
+  available_disks=$(lsblk -d -o NAME,SIZE,TYPE | grep 'disk' | awk '{print $1}')
+
+  # Count the number of available disks
+  num_disks=$(echo "$available_disks" | wc -l)
+
+  # Check if more than one disk is available
+  if [ "$num_disks" -gt 1 ]; then
+    # Show the available disks with a corresponding number
+    echo "Multiple disks detected. Available disks for partitioning:"
+    i=1
+    for disk in $available_disks; do
+      echo "$i) /dev/$disk"
+      i=$((i + 1))
+    done
+
+    # Prompt user for choice
+    read -rp "Choose a disk by typing its name or number: " choice
+
+    # Determine if the choice is a number or a disk name
+    if [[ "$choice" =~ ^[0-9]+$ ]]; then
+      chosen_disk=$(echo "$available_disks" | sed -n "${choice}p")
+    else
+      chosen_disk="$choice"
+    fi
+
+    # Validate the chosen disk
+    if echo "$available_disks" | grep -qw "$chosen_disk"; then
+      echo "You chose /dev/$chosen_disk."
+      export disk="/dev/$chosen_disk"
+    else
+      echo "Invalid choice. Please try again."
+      choose_disk  # Call the function recursively
+    fi
+  else
+    # If there's only one disk, automatically choose it and export it
+    chosen_disk="$available_disks"
+    echo "Only one disk detected. Automatically choosing /dev/$chosen_disk."
+    export disk="/dev/$chosen_disk"
+  fi
+}
+
+create_valid_hostname() {
+  while true; do
+    read -rp "Enter a valid hostname (letters, numbers, and hyphens only): " input_hostname
+    if [[ "$input_hostname" =~ ^[a-zA-Z0-9-]+$ ]]; then
+      echo "Valid hostname: $input_hostname"
+      export hostname="$input_hostname"
+      break  # Exit the loop
+    else
+      echo "Invalid hostname. Please try again."
+    fi
+  done
+}
+
+create_valid_username() {
+  while true; do
+    read -rp "Enter a valid username (letters, numbers, dashes, and underscores only, must start with a letter): " input_username
+    if [[ "$input_username" =~ ^[a-zA-Z][a-zA-Z0-9_-]*$ ]]; then
+      echo "Valid username: $input_username"
+      export username="$input_username"
+      break  # Exit the loop
+    else
+      echo "Invalid username. Please try again."
+    fi
+  done
+}
+
+
 readable_comments "Parsing flags for test, auto modes, and update-step"
 while [ "$#" -gt 0 ]; do
-  case "$1" in
-    --auto | -a)
-      mode="auto"
+case "$1" in
+  --auto | -a)
+    mode="auto"
+    shift
+    ;;
+  --test | -t)
+    export cryptlvmpassword="test"
+    export username="test"
+    export userpassword="test"
+    export rootpassword="test"
+    export hostname="test"
+    # Detect if running in a KVM/QEMU virtual machine
+    vm_status=$(systemd-detect-virt)
+
+    if [[ -z "$disk" && "$vm_status" == "kvm" ]]; then
+    export disk="/dev/vda"
+    fi
+    # Uncomment the following lines if you want to use the above logic for other VMs
+    # if [[ -z "$disk" && "$vm_status" != "none" ]]; then
+    # export disk="/dev/vda"
+    # fi
+    shift
+    ;;
+  --step | -s)
+    # is this a integer?
+    if [[ "$2" =~ ^[0-9]+$ ]]; then
+    export current_step="$2"
+    shift 2
+    else
+      # if not, then set it to 0 and go to the next step
+      export current_step=0
       shift
-      ;;
-    --test | -t)
-      export cryptlvmpassword="test"
-      export username="test"
-      export userpassword="test"
-      export rootpassword="test"
-      export hostname="test"
-      shift
-      ;;
-    --step | -s)
-      # is this a integer?
-      if [[ "$2" =~ ^[0-9]+$ ]]; then
-      export current_step="$2"
-      shift 2
-      else
-        # if not, then set it to 0 and go to the next step
-        export current_step=0
-        shift
-      fi
-      ;;
-    --cryptlvmpassword | -c)
-      export cryptlvmpassword="$2"
-      shift 2
-      ;;
-    --hostname | -H)
-      export hostname="$2"
-      shift 2
-      ;;
-    --username | -n)
-      export username="$2"
-      shift 2
-      ;;
-    --userpassword | -p)
-      export userpassword="$2"
-      shift 2
-      ;;
-    --rootpassword | -P)
-      export rootpassword="$2"
-      shift 2
-      ;;
-    --verbose | -v)
-        readable_comments "This script will output what it does"
-        set -x
-        shift
-        ;;
-    --variables | -V)
-        cat arch-install-variables.env
-        exit 0
-        ;;
-    *)
-        printf "Unknown option: %s\n" "$1"
-        exit 1
-        ;;
-  esac
+    fi
+    ;;
+  --cryptlvmpassword | -c)
+    export cryptlvmpassword="$2"
+    shift 2
+    ;;
+  --hostname | -H)
+    passed_hostname="$2"
+    # Validate the passed hostname
+    if [[ ! "$passed_hostname" =~ ^[a-zA-Z0-9-]+$ ]]; then
+    echo "Invalid hostname passed as a flag."
+    create_valid_hostname
+    else
+      echo "Valid hostname passed as a flag: $passed_hostname"
+      export hostname="$passed_hostname"
+    fi
+    shift 2
+    ;;
+  --username | -n)
+    passed_username="$2"
+    if [[ ! "$passed_username" =~ ^[a-zA-Z][a-zA-Z0-9_-]*$ ]]; then
+    echo "Invalid username passed as a flag."
+    create_valid_username
+    else
+      echo "Valid username passed as a flag: $passed_username"
+      export username="$passed_username"
+    fi
+    shift 2
+    ;;
+  --userpassword | -p)
+    export userpassword="$2"
+    shift 2
+    ;;
+  --rootpassword | -P)
+    export rootpassword="$2"
+    shift 2
+    ;;
+  --verbose | -v)
+    readable_comments "This script will output what it does"
+    set -x
+    shift
+    ;;
+  --variables | -V)
+    readable_comments "Displaying current environment variables:"
+    cat arch-install-variables.env
+    exit 0
+    ;;
+  *)
+    printf "Unknown option: %s\n" "$1"
+    exit 1
+    ;;
+esac
 done
 
-
+# Call the function to choose the disk
 readable_comments "Exporting variables for reference if needed in future re-runs"
 run_step_check 1 bash -c 'cat <<EOF > arch-install-variables.env
-export current_step="${current_step}"
-export cryptlvmpassword="${cryptlvmpassword}"
-export username="${username}"
-export userpassword="${userpassword}"
-export rootpassword="${rootpassword}"
-export hostname="${hostname}"
+export current_step='"${current_step}"'
+export cryptlvmpassword='"${cryptlvmpassword}"'
+export username='"${username}"'
+export userpassword='"${userpassword}"'
+export rootpassword='"${rootpassword}"'
+export hostname='"${hostname}"'
+export disk='"${disk}"'
 EOF'
 
-# readable_comments "Your code here, using 'run_step_check' as needed."
-run_step_check 2 echo "This is step 2"
-run_step_check 3 echo "This is step 3"
-run_step_check 4 echo "This is step 4"
-run_step_check 5 echo "This is step 5"
-# run_step_check 6 echo "This is step 6"
-# run_step_check 7 echo "This is step 7"
-# run_step_check 8 echo "This is step 8"
-# run_step_check 9 echo "This is step 9"
-# run_step_check 10 echo "This is step 10"
-# run_step_check 11 echo "${cryptlvmpassword}"
-# run_step_check 12 echo "${username}"
-# run_step_check 13 echo "${userpassword}"
-# run_step_check 14 echo "${rootpassword}"
-# run_step_check 15 echo "${hostname}"
-# run_step_check 16 echo "${mode}"
-# run_step_check 12 echo "This is step is  to be skipped"
-# run_step_check 17 echo "This is step is to continue after skipping the current"
-# run_step_check 27 echo "This is step is to produce an error or to be called directly"
-exit 0
-
-
-
 readable_comments "Check if all required variables are set and prompt if missing"
-for varname in cryptlvmpassword hostname username userpassword rootpassword; do
+
+for varname in cryptlvmpassword disk hostname username userpassword rootpassword; do
   if [[ -z "${!varname}" ]]; then
-    read -rp "Enter ${varname}: " input
-    printf -v "$varname" '%s' "$input"
-    export "$varname=$input"
+    if [[ "$varname" == "hostname" ]]; then
+      create_valid_hostname
+    elif [[ "$varname" == "username" ]]; then
+      create_valid_username
+    elif [[ "$varname" == "disk" ]]; then
+      choose_disk
+    else
+      read -rp "Enter ${varname}: " input
+      printf -v "$varname" '%s' "$input"
+      export "$varname=$input"
+    fi
   fi
 done
 
-readable_comments "Check EFI mode"
-if [ -d "/sys/firmware/efi" ]; then
-  echo "Booted in UEFI mode."
-else
-  echo "Booted in Legacy mode."
-  echo "Please boot in UEFI mode."
+# Exit the script if not in UEFI mode
+if [ ! -d "/sys/firmware/efi" ]; then
+  readable_comment "Booted in Legacy mode. Please boot in UEFI mode."
+  exit 1
 fi
-    parted /dev/vda mklabel gpt
-    parted /dev/vda mkpart primary fat32 0% 512MiB
-    parted /dev/vda mkpart primary ext4 512MiB 2048MiB
-    parted /dev/vda mkpart primary 2048MiB 95%
-    parted /dev/vda set 1 esp on
-    parted /dev/vda set 2 boot on
-    mkfs.fat -F32 /dev/vda1
-    mkfs.ext4 /dev/vda2
+
+# Read input and trim leading/trailing white spaces
+read -rp "Do you want to reformat the disk? This will erase all data on it. Press [Y, space, or Enter] to proceed: " reformat_choice
+reformat_choice=$(echo "$reformat_choice" | tr -d '[:space:]')
+
+if [[ "$mode" == "auto" || -z "$reformat_choice" || "$reformat_choice" =~ ^[Yy]$ ]]; then
+  echo "Erasing all partitions..."
+  parted "${disk}" rm "$(parted "${disk}" print | awk '/^ / {print $1}')"
+
+  echo "Creating new partitions..."
+  parted "${disk}" mklabel gpt
+  parted "${disk}" mkpart primary fat32 0% 512MiB
+  parted "${disk}" mkpart primary ext4 512MiB 2048MiB
+  parted "${disk}" mkpart primary 2048MiB 95%
+  parted "${disk}" set 1 esp on
+  parted "${disk}" set 2 boot on
+
+  echo "Formatting partitions..."
+  mkfs.fat -F32 "${disk}1"
+  mkfs.ext4 "${disk}2"
+else
+  echo "Skipping disk reformatting."
+fi
 
 readable_comments "Feed YES and the password into cryptsetup with the label 'cryptlvm'"
-{ echo YES; echo "${cryptlvmpassword}"; echo "${cryptlvmpassword}"; } | cryptsetup luksFormat --label=cryptlvm /dev/vda3 --type luks2
-echo "${cryptlvmpassword}" | cryptsetup open --type luks2 /dev/vda3 cryptlvm
+# Securely format and open LUKS volume
+echo -n "${cryptlvmpassword}" | cryptsetup luksFormat --label=cryptlvm "${disk}3" --type luks2 --key-file /dev/stdin
+echo -n "${cryptlvmpassword}" | cryptsetup open --type luks2 "${disk}3" cryptlvm --key-file /dev/stdin
 
 readable_comments "Create LVM partition"
 pvcreate /dev/mapper/cryptlvm
@@ -306,8 +405,8 @@ done
 
 
 readable_comments "Create directories for boot and efi partitions and mount them"
-mkdir -p /mnt/boot && mount -v -t ext4 /dev/vda2 /mnt/boot
-mkdir -p /mnt/boot/efi && mount -v -t vfat /dev/vda1 /mnt/boot/efi
+mkdir -p /mnt/boot && mount -v -t ext4 "${disk}"2 /mnt/boot
+mkdir -p /mnt/boot/efi && mount -v -t vfat "${disk}"1 /mnt/boot/efi
 
 readable_comments "Create directories for tmpfs partitions and mount them"
 mkdir -p /mnt/tmp && mount -v -o defaults,noatime,mode=1777 -t tmpfs tmpfs /mnt/tmp
@@ -422,7 +521,7 @@ systemctl enable NetworkManager || { echo "Failed to enable NetworkManager"; exi
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB || { echo "Failed to install GRUB"; exit 1; }
 
 # Update GRUB settings
-UUID=$(blkid -s UUID -o value /dev/vda3)
+UUID=$(blkid -s UUID -o value "${disk}"3)
 sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=${UUID}:cryptlvm root=/dev/MyVolGroup/root\"|" /etc/default/grub
 grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to generate GRUB config"; exit 1; }
 
@@ -518,14 +617,33 @@ su - "$username" -c "makepkg -si -C $USER_DIR/yay-git" || { echo "Failed to inst
 
 EOF
 
-chmod +x /mnt/arch-post-install.sh
+readable_comments "Check if arch-post-install.sh is created and executable"
+if [[ -f /mnt/arch-post-install.sh  &&  ! -x /mnt/arch-post-install.sh ]]; then
+  readable_comments "The sript is there, now we wil make it executable."
+  chmod +x /mnt/arch-post-install.sh
+else
+  readable_comments "arch-post-install.sh is missing or not executable. Exiting."
+  exit 1
+fi
+
 # Change root into new system
+readable_comments "Change root into new system"
 arch-chroot /mnt
+
 # Run post-install script
+readable_comments "Run post-install script"
 ./arch-post-install.sh
+
 # Remove post-install script
+readable_comments "Remove post-install script"
 rm /mnt/arch-post-install.sh
+
 # Unmount all partitions
+readable_comments "Unmount all partitions"
 umount -R /mnt
+
+# Inform the user before rebooting
+echo "Installation complete. Rebooting now."
 # Reboot
 reboot
+#+END_SRC
