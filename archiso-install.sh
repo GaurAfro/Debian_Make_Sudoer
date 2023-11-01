@@ -397,8 +397,6 @@ for subvol in "${subvols[@]}"; do
   esac
 done
 
-readable_comments "Unmount existing subvolumes recursively from /mnt"
-umount -R -v /mnt
 
 readable_comments "Mount subvolumes"
 readable_comments "Your custom mount options"
