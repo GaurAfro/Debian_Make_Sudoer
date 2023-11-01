@@ -332,7 +332,7 @@ if [[ "$skip_confirmation" == true || -z "$reformat_choice" || "$reformat_choice
   parted --script "${disk}" set 2 boot on
 
   echo "formatting partitions..."
-  mkfs.fat -F 32 "${disk}1"
+  mkfs.fat -F32 "${disk}1"
   mkfs.ext4 "${disk}2"
 else
   echo "skipping disk reformatting."
@@ -400,11 +400,46 @@ done
 readable_comments "Unmount existing subvolumes recursively from /mnt"
 umount -R -v /mnt
 
-# Explicitly mount the rootfs subvolume first
-readable_comments "Explicitly mounting rootfs subvolume"
-mount -t btrfs -o "${mount_opts},subvolid=@rootfs" "$device" "/mnt"
+readable_comments "Mount subvolumes"
+readable_comments "Your custom mount options"
+mount_opts="rw,noatime,space_cache=v2,ssd,discard=async,compress=zstd:5"
 
-# Your existing loop to mount other subvolumes
+readable_comments "The device you're mounting from"
+device="/dev/MyVolGroup/root"
+
+readable_comments "Declare an associative array to hold subvol names and their corresponding directories"
+declare -A subvol_dirs
+for subvol in "${subvols[@]}"; do
+  case "$subvol" in
+    "rootfs")
+      subvol_dirs["@${subvol}"]="/mnt"
+      ;;
+    "home" | "rootuser" | "srv")
+      subvol_dirs["@${subvol}"]="/mnt/$subvol"
+      ;;
+    "snapshots")
+      subvol_dirs["@${subvol}"]="/mnt/.snapshots"
+      ;;
+    "cache" | "log" | "tmp")
+      subvol_dirs["@${subvol}"]="/mnt/var/$subvol"
+      ;;
+  esac
+done
+
+# Fetch and parse the subvolume IDs
+declare -A subvol_ids
+while read -r id path; do
+  subvol_ids["$path"]=$id
+done < <(btrfs subvolume list /mnt | awk '/path / {print $2, $NF}')
+
+readable_comments "Unmount existing subvolumes recursively from /mnt"
+umount -R -v /mnt
+
+# Explicitly mount the rootfs subvolume first using its ID
+readable_comments "Explicitly mounting rootfs subvolume"
+mount -t btrfs -o "${mount_opts},subvolid=${subvol_ids["@rootfs"]}" "$device" "/mnt"
+
+# Loop to mount other subvolumes using their IDs
 readable_comments "Mounting other subvolumes"
 for name in "${!subvol_dirs[@]}"; do
   # Skip rootfs since it's already mounted
@@ -413,7 +448,7 @@ for name in "${!subvol_dirs[@]}"; do
   fi
   dir=${subvol_dirs[$name]}
   mkdir -p "$dir"
-  mount -t btrfs -o "${mount_opts},subvolid=${name}" "$device" "$dir"
+  mount -t btrfs -o "${mount_opts},subvolid=${subvol_ids["$name"]}" "$device" "$dir"
 done
 
 
