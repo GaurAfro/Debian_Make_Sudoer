@@ -1,0 +1,178 @@
+:PROPERTIES:
+:ID:       850d790d-82a6-4a2f-8a4d-e383571cba23
+:END:
+#+title: Public Scripts Repository
+#+created: 2023-09-18 16:48:01
+#+date: 2023-09-18 16:48:01
+#+category: Repository:
+#+filetags: :Project:Public Scripts Repository:Active:
+
+* TLDR
+** How?
+- To minimize the steps I need to take to achieve easy but tedious tasks
+
+** What?
+- The literal copy my repository [[https://github.com/GaurAfro/Public_Scripts][GitHub Webpage]]
+
+** Why?
+- So I can run some scripts quickly without needing to log in to [[id:a66f3e51-89cd-4a20-83a8-886d5c4003a2][GitHub]] first.
+
+* Check if the repository is on your system or it will download it.
+- To check use =C-c C-c= in the code block.
+** Check and Clone repository cli
+#+name: Check and Clone repository cli
+#+begin_src shell
+if [ ! -d "$HOME/Public_Scripts" ]; then gh repo clone GaurAfro/public-scripts ~/public-scripts && echo "Cloned the repository Public Scripts" || echo "Public Scripts Did not get cloned"; else echo "Repository Public Scripts Was Already On Your System"; fi
+#+end_src
+
+#+RESULTS: Check and Clone repository cli
+: Repository Public Scripts Was Already On Your System
+
+** Check and Clone repository ssh
+#+name: Check and Clone repository ssh
+#+begin_src shell
+if [ ! -d "$HOME/Public_Scripts" ]; then git clone git@github.com:GaurAfro/public-scripts.git ~/public-scripts && echo "Cloned the repository Public Scripts" || echo "Public Scripts Did not get cloned"; else echo "Repository Public Scripts Was Already On Your System"; fi
+#+end_src
+
+#+RESULTS: Check and Clone repository ssh
+: Repository Public Scripts Was Already On Your System
+
+** Check and Clone repository https
+#+name: Check and Clone repository https
+#+begin_src shell
+if [ ! -d "$HOME/Public_Scripts" ]; then git clone https://github.com/GaurAfro/Public_Scripts ~/Public_Scripts && echo "Cloned the repository Public Scripts" || echo "Public Scripts Did not get cloned"; else echo "Repository Public Scripts Was Already On Your System"; fi
+#+end_src
+
+#+RESULTS: Check and Clone repository https
+: Repository Public Scripts Was Already On Your System
+
+* Public Scripts Repository
+- This going to be my tangled repository of [[https://github.com/GaurAfro/Public_Scripts][GitHub Webpage]]
+
+** setup_git.sh
+- Local: [[~/Public_Scripts/setup_git.sh][~/Public_Scripts/setup_git.sh]]
+- Webpage: [[https://github.com/GaurAfro/Public_Scripts/blob/4069a08477185ffa18ebbb35f77a385d97fc4a02/setup_git.sh][https://github.com/GaurAfro/Public_Scripts/blob/main/setup_git.sh]]
+#+begin_src shell
+#!/usr/bin/env sh
+
+set -e
+set -u
+
+log_file=./setup_git.log
+
+log_and_run() {
+    cmd="$1"
+    echo "Executing: $cmd" | tee -a "$log_file"
+
+    set +e
+    eval "$cmd" 2>&1 | tee -a "$log_file"
+    cmd_exit_status=$?
+    set -e
+
+    if [ $cmd_exit_status -ne 0 ]; then
+        echo "Command failed with exit status $cmd_exit_status: $cmd" | tee -a "$log_file"
+        exit 1
+    fi
+}
+
+echo "---------------------------------------------------------------" | tee -a "$log_file"
+echo "$(date) Starting the Setup for Git & GitHub CLI..." | tee -a "$log_file"
+echo "---------------------------------------------------------------" | tee -a "$log_file"
+echo "" | tee -a "$log_file"
+echo "" | tee -a "$log_file"
+echo "" | tee -a "$log_file"
+echo "----------------------------------------------------------------" | tee -a "$log_file"
+echo "Created a log file in the same directory of this script location" | tee -a "$log_file"
+echo "----------------------------------------------------------------" | tee -a "$log_file"
+echo "" | tee -a "$log_file"
+echo "" | tee -a "$log_file"
+echo "" | tee -a "$log_file"
+
+# Prompt user for name and email
+echo "Enter your username: "   | tee -a "$log_file"
+read -r username && log_and_run "echo 'Name acquired'"
+echo "Enter your email: "  | tee -a "$log_file"
+read -r email && log_and_run "echo 'Email acquired'"
+echo "" | tee -a "$log_file"
+echo "" | tee -a "$log_file"
+echo "" | tee -a "$log_file"
+
+# Set the provided name and email for git
+git config --global user.name "$username" && log_and_run "echo 'Set the git global username'"
+git config --global user.email "$email" && log_and_run "echo 'Set the git global email'"
+echo "" | tee -a "$log_file"
+echo "" | tee -a "$log_file"
+echo "" | tee -a "$log_file"
+
+# Generate SSH key
+ssh-keygen -t ed25519 -C "$email"  && log_and_run "echo 'Set the git global email'"
+ssh_key_path="$HOME/.ssh/id_ed25519" && log_and_run "echo 'Set the git global email'"
+echo "" | tee -a "$log_file"
+echo "" | tee -a "$log_file"
+echo "" | tee -a "$log_file"
+
+# Start the ssh-agent and load the SSH key
+eval "$(ssh-agent -s)" && log_and_run "echo 'Started the ssh-agent'"
+ssh-add "$ssh_key_path" && log_and_run "echo 'Added the SSH Key'"
+echo "" | tee -a "$log_file"
+echo "" | tee -a "$log_file"
+echo "" | tee -a "$log_file"
+
+# Authenticate GitHub CLI
+if command -v gh > /dev/null 2>&1; then
+    echo "GitHub Cli is installed" | tee -a "$log_file"
+    gh auth login -s 'user:email,read:org,repo,write:org,notifications' -p ssh && log_and_run "echo 'Logged in to GitHub'"
+    echo "" | tee -a "$log_file"
+    echo "" | tee -a "$log_file"
+    echo "" | tee -a "$log_file"
+else
+    echo "------------------------------------------------------------" | tee -a "$log_file"
+    echo "See the Linux/BSD page for distro speciffic instuctions"      | tee -a "$log_file"
+    echo "https://github.com/cli/cli/blob/trunk/docs/install_linux.md"  | tee -a "$log_file"
+    echo "------------------------------------------------------------" | tee -a "$log_file"
+    echo "GitHub Cli is not installed" | tee -a "$log_file"
+    exit 1
+fi
+
+# Test the SSH connection to GitHub
+log_and_run "ssh -T git@github.com"
+echo "" | tee -a "$log_file"
+echo "" | tee -a "$log_file"
+echo "" | tee -a "$log_file"
+
+# rm ./setup_git.log
+# echo "--------------------"
+# echo "Removing the logfile"
+# echo "--------------------"
+# echo ""
+# echo ""
+# echo ""
+echo "------------------------------------------------------------------"
+echo "Git and SSH have been configured with the provided name and email."
+echo "------------------------------------------------------------------"
+exit 0
+
+#+end_src
+
+** add_current_user_to_sudoers.sh
+- Local: [[~/Public_Scripts/add_current_user_to_sudoers.sh][~/Public_Scripts/add_current_user_to_sudoers.sh]]
+- Webpage: [[https://github.com/GaurAfro/Public_Scripts/blob/4069a08477185ffa18ebbb35f77a385d97fc4a02/add_current_user_to_sudoers.sh][https://github.com/GaurAfro/Public_Scripts/blob/main/add_current_user_to_sudoers.sh]]
+#+begin_src shell
+#!/usr/bin/env sh
+
+# Ensure the script is being run as root
+if [ "$(id -u)" != "0" ]; then
+    echo "Please run this script as root."
+    exit 1
+fi
+
+# Get the current username
+USERNAME=$(logname)
+
+# Create a file for the user in /etc/sudoers.d/ with the correct permissions
+echo "$USERNAME ALL=(ALL:ALL) ALL" > "/etc/sudoers.d/$USERNAME"
+chmod 0440 "/etc/sudoers.d/$USERNAME"
+
+echo "Added $USERNAME to sudoers."
+
+#+end_src
