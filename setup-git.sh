@@ -3,9 +3,6 @@ if [ -z "$test_setup" ]; then
     set -e
     set -u
 
-    # tmp_log_file=$(sudo mktemp)
-    # teetmp() { sudo tee -a "$tmp_log_file"; }
-
     tmp_log_file=$(mktemp)
     teetmp() { tee -a "$tmp_log_file" /dev/tty; }
 
@@ -50,34 +47,34 @@ if [ -z "$test_setup" ]; then
     readeable_log_file_before
     echo "Created a log file in the same directory of this script location" | teetmp
     readeable_log_file_after
-    username="${username:-}"
-    email="${email:-}"
+    USERNAME="${USERNAME:-}"
+    EMAIL="${EMAIL:-}"
     # Prompt user for name and email only if they are not provided
-    if [ -z "$username" ]; then
+    if [ -z "$USERNAME" ]; then
         readeable_log_file_before
-        read -rp "Enter your username: "  username && log_and_run "echo 'Name acquired'"
+        read -rp "Enter your username: "  USERNAME && log_and_run "echo 'Name acquired'"
         readeable_log_file_after
     fi
-    if [ -z "$email" ]; then
+    if [ -z "$EMAIL" ]; then
         readeable_log_file_before
-        read -rp "Enter your email: "  email && log_and_run "echo 'Email acquired'"
+        read -rp "Enter your email: "  EMAIL && log_and_run "echo 'Email acquired'"
         readeable_log_file_after
     fi
 
     # Set the provided name and email for git
     readeable_log_file_before
-    git config --global user.name "$username" && log_and_run "echo 'Set the git global username'"
+    git config --global user.name "$USERNAME" && log_and_run "echo 'Set the git global username'"
     readeable_log_file_after
 
     readeable_log_file_before
-    git config --global user.email "$email" && log_and_run "echo 'Set the git global email'"
+    git config --global user.email "$EMAIL" && log_and_run "echo 'Set the git global email'"
     readeable_log_file_after
 
     # Generate SSH key
     ssh_key_path="$HOME/.ssh/id_ed25519"
     if [ ! -f "$ssh_key_path" ]; then
         readeable_log_file_before
-        ssh-keygen -t ed25519 -C "$email"  && log_and_run "echo 'Set the git global email'"
+        ssh-keygen -t ed25519 -C "$EMAIL"  && log_and_run "echo 'Set the git global email'"
         readeable_log_file_after
         # Start the ssh-agent and load the SSH key
         readeable_log_file_before
@@ -118,13 +115,13 @@ if [ -z "$test_setup" ]; then
     readeable_log_file_after
     exit 0
 else
-    username=$(if test -z "${username-}"; then read -rp "Provide your username: " username; fi)
-    email=$(if test -z "${email-}"; then read -rp "Provide your email: " email; fi)
-    git config --global user.name "$username"
-    git config --global user.email "$email"
+    USERNAME=$(if test -z "${username-}"; then read -rp "Provide your username: " username; fi)
+    EMAIL=$(if test -z "${email-}"; then read -rp "Provide your email: " email; fi)
+    git config --global user.name "$USERNAME"
+    git config --global user.email "$EMAIL"
     ssh_key_path="$HOME/.ssh/id_ed25519"
     if [ ! -f "$ssh_key_path" ]; then
-        ssh-keygen -t ed25519 -C "$email"  && echo 'Set the git global email'
+        ssh-keygen -t ed25519 -C "$EMAIL"  && echo 'Set the git global email'
         # Start the ssh-agent and load the SSH key
         eval "$(ssh-agent -s)" && echo 'Started the ssh-agent'
         ssh-add "$ssh_key_path" && echo 'Added the SSH Key'

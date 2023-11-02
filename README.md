@@ -1,14 +1,32 @@
 # Public Scripts
 ---
-# **Setup SSH for GitHub Login**
+
+## **Setup SSH for GitHub Login**
 ```bash
-curl -sSL -o setup_git.sh https://raw.githubusercontent.com/gaurafro/public-scripts/main/setup_git.sh
-chmod +x setup_git.sh
-./setup_git.sh
+bash -c "$( export username=[YOUR USERNAME]; export email=[YOUR EMAIL]; curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/gaurafro/public-scripts/main/setup-git.sh )"
+```
+
+```bash
+curl -sSL -o setup_git.sh https://raw.githubusercontent.com/gaurafro/public-scripts/main/setup-git.sh
+chmod +x setup-git.sh
+./setup-git.sh
 ```
 ---
 
-### **Using the `add_current_user_to_sudoers.sh` Script with `curl`**
+## **Setup Doas**
+If you are using this script in an install, or before defining the user the variable **"USER"**,
+then you can export the custom variable **"USERNAME"** in the subshell(i.e. just for that one time use).
+```bash
+bash -c "$(curl --proto '=https' --tlsv1.2 -ssf https://raw.githubusercontent.com/gaurafro/public-scripts/main/setup-doas.sh)"
+```
+
+```bash
+curl -sSL -o setup_git.sh https://raw.githubusercontent.com/gaurafro/public-scripts/main/setup-doas.sh
+chmod +x setup-doas.sh
+./setup-doas.sh
+```
+---
+### **Using the `add-to-sudoers.sh` Script with `curl`**
 
 This guide will walk you through the process of executing the `add-to-sudoers.sh` script using `curl`.
 
