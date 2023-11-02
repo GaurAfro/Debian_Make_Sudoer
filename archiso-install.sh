@@ -303,6 +303,7 @@ done
 
 # Exit the script if not in UEFI mode
 if [ ! -d "/sys/firmware/efi" ]; then
+
   readable_comment "Booted in Legacy mode. Please boot in UEFI mode."
   exit 1
 fi
@@ -483,7 +484,7 @@ boot_efi=("efibootmgr" "grub" "grub-btrfs")
 
 # Utilities
 # shellcheck disable=SC2034
-utilities=("curl" "jq" "man-db" "man-pages" "python" "usbutils" "util-linux" "util-linux-libs" "xdg-utils" "xdg-user-dirs" "unzip" "zip")
+utilities=("curl" "expect" "jq" "man-db" "man-pages" "python" "usbutils" "util-linux" "util-linux-libs" "xdg-utils" "xdg-user-dirs" "unzip" "zip")
 
 # Audio
 # shellcheck disable=SC2034
@@ -563,51 +564,104 @@ userpassword=${userpassword-}
 rootpassword=${rootpassword-}
 hostname=${hostname-}
 mode=${mode-}
+disk=${disk-}
 
-# Enable Network Manager
-systemctl enable NetworkManager || { echo "Failed to enable NetworkManager"; exit 1; }
+# Enable NetworkManager service
+if ! systemctl enable NetworkManager; then
+  echo "Failed to enable NetworkManager"
+  exit 1
+fi
 
-# Install GRUB
-grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB || { echo "Failed to install GRUB"; exit 1; }
+# Install GRUB bootloader
+if ! grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB; then
+  echo "Failed to install GRUB"
+  exit 1
+fi
 
-# Update GRUB settings
-UUID=$(blkid -s UUID -o value "${disk}"3)
-sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=${UUID}:cryptlvm root=/dev/MyVolGroup/root\"|" /etc/default/grub
-grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to generate GRUB config"; exit 1; }
+# Update GRUB for disk encryption
+if ! sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=${UUID}:cryptlvm root=/dev/MyVolGroup/root\"|" /etc/default/grub; then
+  echo "Failed to update GRUB configuration for disk encryption"
+  exit 1
+fi
 
-# Update mkinitcpio.conf
-sed -i "s|^HOOKS=.*$|HOOKS=(base udev autodetect modconf kms keyboard keymap consolefont block encrypt lvm2 filesystems fsck)|" /etc/mkinitcpio.conf
+# Generate GRUB configuration file
+if ! grub-mkconfig -o /boot/grub/grub.cfg; then
+  echo "Failed to generate GRUB config"
+  exit 1
+fi
+
+# Update HOOKS in mkinitcpio.conf
+if ! sed -i "s|^HOOKS=.*$|HOOKS=(base udev autodetect modconf kms keyboard keymap consolefont block encrypt lvm2 filesystems fsck)|" /etc/mkinitcpio.conf; then
+  echo "Failed to update mkinitcpio.conf"
+  exit 1
+fi
 
 # Set console font
-echo 'FONT=ter-132b' | tee -a /etc/vconsole.conf
+if ! echo 'FONT=ter-132b' | tee -a /etc/vconsole.conf > /dev/null; then
+  echo "Failed to set console font"
+  exit 1
+fi
 
 # Update pacman.conf
-sed -i 's|^#VerbosePkgLists|VerbosePkgLists|; s|^#ParallelDownloads = 5|ParallelDownloads = 5|' /etc/pacman.conf
+if ! sed -i 's|^#VerbosePkgLists|VerbosePkgLists|; s|^#ParallelDownloads = 5|ParallelDownloads = 5|' /etc/pacman.conf; then
+  echo "Failed to update pacman.conf"
+  exit 1
+fi
 
 # Update mirrorlist
-curl -o /etc/pacman.d/mirrorlist https://archlinux.org/mirrorlist/all/
-reflector -c "Netherlands," -p https -a 3 --sort rate --save /etc/pacman.d/mirrorlist
+if ! curl -o /etc/pacman.d/mirrorlist https://archlinux.org/mirrorlist/all/; then
+  echo "Failed to update mirrorlist"
+  exit 1
+fi
+
+# Sort and save mirrorlist
+if ! reflector -c "Netherlands," -p https -a 3 --sort rate --save /etc/pacman.d/mirrorlist; then
+  echo "Failed to sort and save mirrorlist"
+  exit 1
+fi
 
 # Set hardware clock
-hwclock --systohc || { echo "Failed to set hardware clock"; exit 1; }
+if ! hwclock --systohc; then
+  echo "Failed to set hardware clock"
+  exit 1
+fi
 
 # Set Timezone
-ln -sf /usr/share/zoneinfo/Europe/Amsterdam /etc/localtime || { echo "Failed to set timezone"; exit 1; }
+if ! ln -sf /usr/share/zoneinfo/Europe/Amsterdam /etc/localtime; then
+  echo "Failed to set timezone"
+  exit 1
+fi
 
-# Generate Locales
-sed -i 's|^#\(en_US.UTF-8 UTF-8\)|\1|; s|^#\(en_US ISO-8859-1\)|\1|' /etc/locale.gen || { echo "Failed to set locale in /etc/locale.gen"; exit 1; }
-locale-gen || { echo "Failed to generate locale"; exit 1; }
-echo "LANG=en_US.UTF-8" > /etc/locale.conf || { echo "Failed to set LANG in /etc/locale.conf"; exit 1; }
+# Generate Locales in /etc/locale.gen
+if ! sed -i 's|^#\(en_US.UTF-8 UTF-8\)|\1|; s|^#\(en_US ISO-8859-1\)|\1|' /etc/locale.gen; then
+  echo "Failed to set locale in /etc/locale.gen"
+  exit 1
+fi
 
-# Install yay from AUR
-command -v git >/dev/null 2>&1 || { echo "Git is not installed. Aborting."; exit 1; }
-mkdir -p ~/.local/share/src && cd ~/.local/share/src
-git clone https://aur.archlinux.org/yay-git.git || { echo "Failed to clone yay-git"; exit 1; }
-cd yay-git
-makepkg -si || { echo "Failed to install yay"; exit 1; }
+# Create and populate the custom date-time format file
+mkdir -p /etc/locale.conf.d
+if ! echo "d_fmt \"%Y-%m-%d  %H-%M\"" > /etc/locale.conf.d/nl_date_time_format; then
+  echo "Failed to set custom date-time format in /etc/locale.conf.d/nl_date_time_format"
+  exit 1
+fi
 
-# Generate initial ramdisk
-mkinitcpio -P || { echo "Failed to generate initial ramdisk"; exit 1; }
+# Set LANG and custom LC_TIME in /etc/locale.conf
+if ! { echo "LANG=en_US.UTF-8"; echo "LC_TIME=/etc/locale.conf.d/nl_date_time_format"; } > /etc/locale.conf; then
+  echo "Failed to set LANG and custom LC_TIME in /etc/locale.conf"
+  exit 1
+fi
+
+# Generate locale information
+if ! locale-gen; then
+  echo "Failed to generate locale"
+  exit 1
+fi
+
+# Generate the initial ramdisk
+if ! mkinitcpio -P; then
+  echo "Failed to generate initial ramdisk"
+  exit 1
+fi
 
 # Check for root password
 if [ -z "$rootpassword" ]; then
@@ -624,15 +678,35 @@ if [ -z "$userpassword" ]; then
   read -rp "Enter the user password: " userpassword
 fi
 
-# Create user, set shell, and add to 'wheel' group
-useradd -m -G wheel -s /usr/bin/fish "$username"
+# Generate hashed user password using OpenSSL
+user_hashed_password=$(openssl passwd -6 -salt "$(openssl rand -base64 12)" "${userpassword}")
 
-# Set passwords for root and user in one go
-echo -e "root:${rootpassword}\n${username}:${userpassword}" | chpasswd
+# Create user, set shell, and add the user to groups
+if ! useradd -m -G wheel,audio,video,power -s /usr/bin/fish -p "${user_hashed_password}" "${username}"; then
+  echo "Failed to create user ${username}"
+  exit 1
+fi
 
-# Create a sudoers file for the user
-echo "$username ALL=(ALL) ALL" > "/etc/sudoers.d/$username"
-chmod 0440 "/etc/sudoers.d/$username"
+# Generate hashed root password using OpenSSL
+root_hashed_password=$(openssl passwd -6 -salt "$(openssl rand -base64 12)" "${rootpassword}")
+
+# Set the root password using chpasswd
+if ! echo "root:${root_hashed_password}" | chpasswd -e; then
+  echo "Failed to set root password"
+  exit 1
+fi
+
+# Create a sudoers file for the new user
+if ! echo "${username} ALL=(ALL) ALL" > "/etc/sudoers.d/${username}"; then
+  echo "Failed to create sudoers file for ${username}"
+  exit 1
+fi
+
+# Set correct permissions for the sudoers file
+if ! chmod 0440 "/etc/sudoers.d/${username}"; then
+  echo "Failed to set permissions for sudoers file of ${username}"
+  exit 1
+fi
 
 # Check for hostname
 if [ -z "${hostname}" ]; then
@@ -640,28 +714,82 @@ if [ -z "${hostname}" ]; then
 fi
 
 # Set the hostname
-echo "${hostname}" > /etc/hostname
+if ! echo "${hostname}" > /etc/hostname; then
+  echo "Failed to set hostname"
+  exit 1
+fi
 
-if [[ "$mode" == "auto" ]] || [[ "$mode" == "test" ]]; then
-  groupadd autologin
-  gpasswd -a "$username" autologin
+# Configure automatic login
+if [[ "$mode" == "auto" ]] || [[ "$username" == "test" ]]; then
+  if ! groupadd autologin; then
+    echo "Failed to add autologin group"
+    exit 1
+  fi
+
+  if ! gpasswd -a "$username" autologin; then
+    echo "Failed to add ${username} to autologin group"
+    exit 1
+  fi
+fi
+
+# Modify getty service for automatic login
+if ! sed -i "s|^ExecStart=-/sbin/agetty.*$|ExecStart=-/sbin/agetty -a ${username} - \$TERM|" /usr/lib/systemd/system/getty@.service; then
+  echo "Failed to modify getty service for autologin"
+  exit 1
 fi
 
 # Check if git is installed
-command -v git >/dev/null 2>&1 || { echo "Git is not installed. Aborting."; exit 1; }
+if ! command -v git >/dev/null 2>&1; then
+    pacman -S --noconfirm --needed git
+    if ! command -v git >/dev/null 2>&1; then
+        echo "Git is not installed. Aborting."
+        exit 1
+    fi
+fi
 
-# Define the directory for yay-git
-USER_DIR="/home/$username/.local/share/src"
+# Check if expect is installed
+if ! command -v expect >/dev/null 2>&1; then
+    pacman -S --noconfirm --needed expect
+    if ! command -v expect >/dev/null 2>&1; then
+        echo "Expect is not installed. Aborting."
+        exit 1
+    fi
+fi
 
-# Create directory if doesn't exist
-su - "$username" -c "mkdir -p $USER_DIR"
+# Define directories for YAY source and build
+USER_SRC_DIR="/home/${username}/.local/share/src"
+USER_YAY_DIR="${USER_SRC_DIR}/yay-git"
 
-# Clone yay-git repository
-su - "$username" -c "git clone https://aur.archlinux.org/yay-git.git $USER_DIR/yay-git" || { echo "Failed to clone yay-git"; exit 1; }
+# Create source directory if it doesn't exist
+if ! su - "${username}" -c "mkdir -p ${USER_SRC_DIR}"; then
+  echo "Failed to create source directory ${USER_SRC_DIR}"
+  exit 1
+fi
 
-# Build and install yay
-su - "$username" -c "makepkg -si -C $USER_DIR/yay-git" || { echo "Failed to install yay"; exit 1; }
+# Clone YAY repository from AUR
+if ! su - "${username}" -c "git clone https://aur.archlinux.org/yay-git.git ${USER_YAY_DIR}"; then
+  echo "Failed to clone yay-git repository"
+  exit 1
+fi
 
+# Build and install YAY
+if ! su - "${username}" -c "expect -c 'spawn cd ${USER_YAY_DIR} && makepkg -si; expect {
+    \"*?assword*\" {send -- \"$userpassword\\r\"; exp_continue;}
+    \"*?roceed with installation*\" {send -- \"Y\\r\"; interact;}
+}'"
+then
+  echo "Failed to build and install yay"
+  exit 1
+fi
+
+# Install Thorium Browser from AUR using YAY
+if ! su - "${username}" -c "expect -c 'spawn yay -S --noconfirm thorium-browser-bin; expect {
+    \"*?assword*\" {send -- \"$userpassword\\r\"; interact;}
+}'"
+then
+  echo "Failed to install Thorium Browser"
+  exit 1
+fi
 EOF
 
 readable_comments "Check if arch-post-install.sh is created and executable"
