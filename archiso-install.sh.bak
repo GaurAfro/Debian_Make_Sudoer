@@ -398,33 +398,6 @@ for subvol in "${subvols[@]}"; do
   esac
 done
 
-
-readable_comments "Mount subvolumes"
-readable_comments "Your custom mount options"
-mount_opts="rw,noatime,space_cache=v2,ssd,discard=async,compress=zstd:5"
-
-readable_comments "The device you're mounting from"
-device="/dev/MyVolGroup/root"
-
-readable_comments "Declare an associative array to hold subvol names and their corresponding directories"
-declare -A subvol_dirs
-for subvol in "${subvols[@]}"; do
-  case "$subvol" in
-    "rootfs")
-      subvol_dirs["@${subvol}"]="/mnt"
-      ;;
-    "home" | "rootuser" | "srv")
-      subvol_dirs["@${subvol}"]="/mnt/$subvol"
-      ;;
-    "snapshots")
-      subvol_dirs["@${subvol}"]="/mnt/.snapshots"
-      ;;
-    "cache" | "log" | "tmp")
-      subvol_dirs["@${subvol}"]="/mnt/var/$subvol"
-      ;;
-  esac
-done
-
 # Fetch and parse the subvolume IDs
 declare -A subvol_ids
 while read -r id path; do
