@@ -13,6 +13,49 @@ export YELLOW='\033[1;33m' # Yellow color (for warnings and hints)
 export GREEN='\033[0;32m' # Green color (for success)
 export NC='\033[0m' # No Color (to reset the terminal color)
 
+printf "%bChecking to see if packages are installed.%b\n" "${YELLOW}" "${NC}"
+if ! command -v unzip >/dev/null 2>&1; then
+    printf "%b unzip is not installed. Installing...%b\n" "${YELLOW}" "${NC}"
+    pacman -Sy unzip --noconfirm
+else
+    printf "%b unzip is installed.%b\n" "${GREEN}" "${NC}"
+fi
+
+if ! command -v curl >/dev/null 2>&1; then
+    printf "%b curl is not installed. Installing...%b\n" "${YELLOW}" "${NC}"
+    pacman -Sy curl --noconfirm
+else
+    printf "%b curl is installed.%b\n" "${GREEN}" "${NC}"
+fi
+
+if ! command -v jq >/dev/null 2>&1; then
+    printf "%b jq is not installed. Installing...%b\n" "${YELLOW}" "${NC}"
+    pacman -Sy jq --noconfirm
+else
+    printf "%b jq is installed.%b\n" "${GREEN}" "${NC}"
+fi
+
+if ! command -v bws >/dev/null 2>&1; then
+    if [ ! -f bws-x86_64-unknown-linux-gnu-0.3.1.zip ]; then
+        printf "%bDownloading Bitwarden Secrets...%b\n" "${YELLOW}" "${NC}"
+        curl --proto '=https' -# -L -O https://github.com/bitwarden/sdk/releases/download/bws-v0.3.1/bws-x86_64-unknown-linux-gnu-0.3.1.zip
+    fi
+
+    if [ ! -f ./bws ]; then
+        printf "%bUnzipping Bitwarden Secrets...%b\n" "${YELLOW}" "${NC}"
+        unzip bws-x86_64-unknown-linux-gnu-0.3.1.zip
+    fi
+
+    if [ ! -x ./bws ]; then
+        printf "%bBitwarden Secrets is not executable. Manually check what happened.%b\n" "${RED}" "${NC}"
+        exit 1
+    else
+        printf "%bBitwarden Secrets is executable.%b\n" "${GREEN}" "${NC}"
+        printf "%bAdding Bitwarden Secrets to PATH...%b\n" "${YELLOW}" "${NC}"
+        mv ./bws /usr/local/bin/bws
+    fi
+fi
+
 # Load environment variables from file
 printf "%bLoading environment variables from file if it exists.%b\n" "${YELLOW}" "${NC}"
 if [ -f ./archiso-install.env ]; then
@@ -84,11 +127,10 @@ format_boot_partitions() {
 setup_luks() {
   echo -n "${CRYPTLVM_PASSWORD}" | cryptsetup luksFormat --label=cryptlvm --type luks2 /dev/disk/by-partlabel/LINUX -
   echo -n "${CRYPTLVM_PASSWORD}" | cryptsetup luksOpen /dev/disk/by-partlabel/LINUX cryptlvm -
-  cryptsetup refresh \
+  cryptsetup refresh cryptlvm \
         --allow-discards \
         --perf-no_read_workqueue --perf-no_write_workqueue \
-        --persistent \
-        root
+        --persistent
 }
 
 # Function to setup LVM
@@ -433,6 +475,7 @@ _EOF_
   # Log in to GitHub with the gh CLI using the token stored in the GH_TOKEN environment variable
   printf "%bLog in to GitHub with the gh CLI using the token stored in the GH_TOKEN environment variable%b" "${YELLOW}" "${NC}"
   arch-chroot "$rootmnt" su "${USER_NAME}" -c 'gh auth status'
+  arch-chroot "$rootmnt" su "${USER_NAME}" -c "gh ssh-key add /home/\"${USER_NAME}\"/.ssh/id_ed25519.pub --title \"${HOSTNAME} - $(date +%Y-%m-%d_%H-%M)\""
 
   # Enable SSH service
   printf "%bEnable SSH service%b" "${YELLOW}" "${NC}"
